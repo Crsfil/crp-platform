@@ -5,6 +5,7 @@ import com.example.crp.procurement.messaging.Events;
 import com.example.crp.procurement.repo.ProcurementRequestRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -33,6 +34,7 @@ public class ProcurementController {
     }
 
     @PatchMapping("/{id}/approve")
+    @PreAuthorize("hasAuthority('PROCUREMENT_APPROVE') or hasRole('ADMIN')")
     public ResponseEntity<ProcurementRequest> approve(@PathVariable Long id, Authentication auth) {
         return repository.findById(id).map(pr -> {
             pr.setStatus("APPROVED");
@@ -44,6 +46,7 @@ public class ProcurementController {
     }
 
     @PatchMapping("/{id}/reject")
+    @PreAuthorize("hasAuthority('PROCUREMENT_APPROVE') or hasRole('ADMIN')")
     public ResponseEntity<ProcurementRequest> reject(@PathVariable Long id, Authentication auth) {
         return repository.findById(id).map(pr -> {
             pr.setStatus("REJECTED");

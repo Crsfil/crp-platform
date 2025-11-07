@@ -35,3 +35,9 @@ inventory:
   base-url: ${INVENTORY_BASE_URL:http://inventory-service:8082}
 procurement:
   base-url: ${PROCUREMENT_BASE_URL:http://procurement-service:8083}
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${SECURITY_JWT_ISSUER:http://auth-service:8081}

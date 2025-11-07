@@ -1,5 +1,6 @@
 package com.example.crp.auth.web;
 
+import com.example.crp.auth.config.KeyProvider;
 import com.example.crp.auth.domain.User;
 import com.example.crp.auth.dto.AuthDtos.LoginRequest;
 import com.example.crp.auth.dto.AuthDtos.RefreshRequest;
@@ -8,8 +9,6 @@ import com.example.crp.auth.dto.AuthDtos.TokenResponse;
 import com.example.crp.auth.service.JwtService;
 import com.example.crp.auth.service.RedisTokenStore;
 import com.example.crp.auth.service.UserService;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,7 +17,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import javax.crypto.SecretKey;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -31,9 +29,10 @@ public class AuthController {
     private final UserService userService;
     private final JwtService jwtService;
     private final RedisTokenStore tokenStore;
+    private final KeyProvider keys;
 
-    public AuthController(AuthenticationManager authManager, UserService userService, JwtService jwtService, RedisTokenStore tokenStore) {
-        this.authManager = authManager; this.userService = userService; this.jwtService = jwtService; this.tokenStore = tokenStore;
+    public AuthController(AuthenticationManager authManager, UserService userService, JwtService jwtService, RedisTokenStore tokenStore, KeyProvider keys) {
+        this.authManager = authManager; this.userService = userService; this.jwtService = jwtService; this.tokenStore = tokenStore; this.keys = keys;
     }
 
     @PostMapping("/register")
@@ -57,7 +56,7 @@ public class AuthController {
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@Valid @RequestBody RefreshRequest req) {
         try {
-            var claims = Jwts.parserBuilder().setSigningKey((SecretKey) jwtService.getKey()).build().parseClaimsJws(req.refreshToken).getBody();
+            var claims = io.jsonwebtoken.Jwts.parserBuilder().setSigningKey(keys.getPublicKey()).build().parseClaimsJws(req.refreshToken).getBody();
             if (!"refresh".equals(claims.get("typ"))) return ResponseEntity.badRequest().body(Map.of("error","invalid token type"));
             String tid = (String) claims.get("tid");
             if (!tokenStore.isRefreshActive(tid)) return ResponseEntity.status(401).body(Map.of("error","refresh revoked"));

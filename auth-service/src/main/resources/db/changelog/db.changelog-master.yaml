@@ -32,4 +32,29 @@ databaseChangeLog:
             referencedTableName: role
             referencedColumnNames: id
             constraintName: fk_user_role_role
-
+  - changeSet:
+      id: 002-auth-permissions
+      author: system
+      changes:
+        - createTable:
+            tableName: permission
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: code, type: VARCHAR(128), constraints: { nullable: false, unique: true } }
+        - createTable:
+            tableName: role_permission
+            columns:
+              - column: { name: role_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: permission_id, type: BIGINT, constraints: { nullable: false } }
+        - addForeignKeyConstraint:
+            baseTableName: role_permission
+            baseColumnNames: role_id
+            referencedTableName: role
+            referencedColumnNames: id
+            constraintName: fk_role_perm_role
+        - addForeignKeyConstraint:
+            baseTableName: role_permission
+            baseColumnNames: permission_id
+            referencedTableName: permission
+            referencedColumnNames: id
+            constraintName: fk_role_perm_perm

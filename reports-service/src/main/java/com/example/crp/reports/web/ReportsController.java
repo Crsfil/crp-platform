@@ -4,6 +4,7 @@ import com.example.crp.reports.service.ReportGenerator;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,6 +16,7 @@ public class ReportsController {
     public ReportsController(ReportGenerator generator) { this.generator = generator; }
 
     @GetMapping("/equipment-by-status.xlsx")
+    @PreAuthorize("hasAuthority('REPORTS_READ') or hasRole('ADMIN')")
     public ResponseEntity<byte[]> equipmentByStatus() {
         byte[] data = generator.equipmentByStatusXlsx();
         return ResponseEntity.ok()
@@ -24,6 +26,7 @@ public class ReportsController {
     }
 
     @GetMapping("/requests.xlsx")
+    @PreAuthorize("hasAuthority('REPORTS_READ') or hasRole('ADMIN')")
     public ResponseEntity<byte[]> requests() {
         byte[] data = generator.requestsByStatusXlsx();
         return ResponseEntity.ok()

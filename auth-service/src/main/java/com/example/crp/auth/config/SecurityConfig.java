@@ -1,12 +1,12 @@
 package com.example.crp.auth.config;
 
-import com.example.crp.auth.service.JwtService;
 import io.jsonwebtoken.Jwts;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,16 +16,17 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.crypto.SecretKey;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.security.interfaces.RSAPublicKey;
 import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
@@ -41,19 +42,19 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, JwtService jwtService) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, KeyProvider keys) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/**", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**",
-                                "/auth/login", "/auth/register", "/auth/refresh").permitAll()
+                                "/auth/login", "/auth/register", "/auth/refresh", "/.well-known/jwks.json").permitAll()
                         .anyRequest().authenticated())
-                .addFilterBefore(new JwtAuthFilter(jwtService), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JwtAuthFilter(keys.getPublicKey()), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
     static class JwtAuthFilter extends OncePerRequestFilter {
-        private final JwtService jwtService;
-        JwtAuthFilter(JwtService jwtService) { this.jwtService = jwtService; }
+        private final RSAPublicKey publicKey;
+        JwtAuthFilter(RSAPublicKey publicKey) { this.publicKey = publicKey; }
         @Override
         protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
                 throws ServletException, IOException {
@@ -61,7 +62,7 @@ public class SecurityConfig {
             if (header != null && header.startsWith("Bearer ")) {
                 String token = header.substring(7);
                 try {
-                    var claims = Jwts.parserBuilder().setSigningKey((SecretKey) jwtService.getKey()).build()
+                    var claims = Jwts.parserBuilder().setSigningKey(publicKey).build()
                             .parseClaimsJws(token).getBody();
                     String email = (String) claims.get("email");
                     @SuppressWarnings("unchecked") var roles = (List<String>) claims.get("roles");
