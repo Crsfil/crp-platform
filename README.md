@@ -1,4 +1,4 @@
-CRP Learning Platform (Lease Management)
+CRP Platform 
 
 Сервисы:
 - auth-service — аутентификация и роли (каркас)
