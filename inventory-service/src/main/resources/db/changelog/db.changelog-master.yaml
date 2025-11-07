@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-init-inventory
+      author: system
+      changes:
+        - createTable:
+            tableName: equipment
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: type, type: VARCHAR(128) }
+              - column: { name: model, type: VARCHAR(128) }
+              - column: { name: status, type: VARCHAR(64) }
+              - column: { name: price, type: NUMERIC(19,2) }
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, defaultValueComputed: CURRENT_TIMESTAMP }
+

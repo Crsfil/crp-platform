@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:flowable="http://flowable.org/bpmn" targetNamespace="Examples">
+  <process id="applicationProcess" name="Application Process" isExecutable="true">
+    <startEvent id="start" />
+    <sequenceFlow id="s1" sourceRef="start" targetRef="svcKyc" />
+
+    <serviceTask id="svcKyc" name="KYC Check" flowable:class="com.example.crp.bpm.tasks.KycTaskDelegate" />
+    <sequenceFlow id="s2" sourceRef="svcKyc" targetRef="svcUw" />
+
+    <serviceTask id="svcUw" name="Underwriting" flowable:class="com.example.crp.bpm.tasks.UnderwritingTaskDelegate" />
+    <sequenceFlow id="s3" sourceRef="svcUw" targetRef="svcPricing" />
+
+    <serviceTask id="svcPricing" name="Pricing" flowable:class="com.example.crp.bpm.tasks.PricingTaskDelegate" />
+    <sequenceFlow id="s4" sourceRef="svcPricing" targetRef="end" />
+
+    <endEvent id="end" />
+  </process>
+</definitions>
+

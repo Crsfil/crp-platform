@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-init-customer
+      author: system
+      changes:
+        - createTable:
+            tableName: customer
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: type, type: VARCHAR(32) }
+              - column: { name: name, type: VARCHAR(256) }
+              - column: { name: inn, type: VARCHAR(16) }
+              - column: { name: ogrn, type: VARCHAR(16) }
+              - column: { name: kyc_status, type: VARCHAR(32) }
+

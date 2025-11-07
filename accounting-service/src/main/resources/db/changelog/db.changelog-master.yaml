@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-init-accounting
+      author: system
+      changes:
+        - createTable:
+            tableName: ledger_entry
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: type, type: VARCHAR(64) }
+              - column: { name: ref_id, type: BIGINT }
+              - column: { name: amount, type: NUMERIC(19,2) }
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, defaultValueComputed: CURRENT_TIMESTAMP }
+

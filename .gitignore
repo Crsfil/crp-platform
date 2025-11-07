@@ -1,0 +1,36 @@
+# Maven/Java
+target/
+*.class
+*.log
+*.tmp
+.classpath
+.project
+.settings/
+.factorypath
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Build artifacts
+*.jar
+*.war
+*.ear
+
+# OS / misc
+Thumbs.db
+
+# Docker
+**/.env
+docker-data/
+
+# Logs
+logs/
+**/logs/
+
+# Coverage
+**/surefire-reports/
+**/jacoco.exec
+

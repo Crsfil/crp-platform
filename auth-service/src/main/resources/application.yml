@@ -1,0 +1,36 @@
+server:
+  port: ${SERVER_PORT:8081}
+
+spring:
+  application:
+    name: auth-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/authdb}
+    username: ${DB_USERNAME:auth}
+    password: ${DB_PASSWORD:auth}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:kafka:9092}
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+
+security:
+  jwt:
+    # base64-encoded 256-bit secret. Override via env SECURITY_JWT_SECRET
+    secret: ${SECURITY_JWT_SECRET:2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
+    access-ttl-s: ${SECURITY_JWT_ACCESS_TTL_S:1800}
+    refresh-ttl-s: ${SECURITY_JWT_REFRESH_TTL_S:1209600}

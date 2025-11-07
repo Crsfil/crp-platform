@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-init-reports
+      author: system
+      changes:
+        - createTable:
+            tableName: report_job
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: type, type: VARCHAR(64) }
+              - column: { name: params_json, type: TEXT }
+              - column: { name: status, type: VARCHAR(32) }
+              - column: { name: file_path, type: VARCHAR(512) }
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, defaultValueComputed: CURRENT_TIMESTAMP }
+

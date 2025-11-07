@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-init-agreement
+      author: system
+      changes:
+        - createTable:
+            tableName: agreement
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: application_id, type: BIGINT }
+              - column: { name: number, type: VARCHAR(64) }
+              - column: { name: status, type: VARCHAR(32) }
+              - column: { name: signed_at, type: TIMESTAMP WITH TIME ZONE }
+

@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: procurement-service
+  namespace: crp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: procurement-service
+  template:
+    metadata:
+      labels:
+        app: procurement-service
+    spec:
+      containers:
+        - name: procurement-service
+          image: ghcr.io/your-org/procurement-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8083
+          env:
+            - name: SERVER_PORT
+              value: "8083"
+            - name: DB_URL
+              value: jdbc:postgresql://procurement-postgres.crp.svc.cluster.local:5432/procurementdb
+            - name: DB_USERNAME
+              value: proc
+            - name: DB_PASSWORD
+              value: proc
+            - name: KAFKA_BOOTSTRAP
+              value: kafka:9092
+            - name: REDIS_HOST
+              value: redis
+            - name: REDIS_PORT
+              value: "6379"
+            - name: SECURITY_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: crp-shared
+                  key: jwt-secret
+            - name: INTERNAL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: crp-shared
+                  key: internal-api-key
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: procurement-service
+  namespace: crp
+spec:
+  selector:
+    app: procurement-service
+  ports:
+    - name: http
+      port: 8083
+      targetPort: 8083

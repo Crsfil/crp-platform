@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: crp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+        - name: auth-service
+          image: ghcr.io/your-org/auth-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+          env:
+            - name: SERVER_PORT
+              value: "8081"
+            - name: DB_URL
+              value: jdbc:postgresql://auth-postgres.crp.svc.cluster.local:5432/authdb
+            - name: DB_USERNAME
+              value: auth
+            - name: DB_PASSWORD
+              value: auth
+            - name: KAFKA_BOOTSTRAP
+              value: kafka:9092
+            - name: REDIS_HOST
+              value: redis
+            - name: REDIS_PORT
+              value: "6379"
+            - name: SECURITY_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: crp-shared
+                  key: jwt-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: crp
+spec:
+  selector:
+    app: auth-service
+  ports:
+    - name: http
+      port: 8081
+      targetPort: 8081

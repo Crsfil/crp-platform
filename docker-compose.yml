@@ -1,0 +1,473 @@
+version: "3.8"
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9093:9093"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  auth-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: authdb
+      POSTGRES_USER: auth
+      POSTGRES_PASSWORD: auth
+    ports:
+      - "5433:5432"
+    volumes:
+      - auth_pgdata:/var/lib/postgresql/data
+
+  inventory-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: inventorydb
+      POSTGRES_USER: inventory
+      POSTGRES_PASSWORD: inventory
+    ports:
+      - "5434:5432"
+    volumes:
+      - inventory_pgdata:/var/lib/postgresql/data
+
+  procurement-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: procurementdb
+      POSTGRES_USER: proc
+      POSTGRES_PASSWORD: proc
+    ports:
+      - "5435:5432"
+    volumes:
+      - procurement_pgdata:/var/lib/postgresql/data
+
+  reports-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: reportsdb
+      POSTGRES_USER: reports
+      POSTGRES_PASSWORD: reports
+    ports:
+      - "5436:5432"
+    volumes:
+      - reports_pgdata:/var/lib/postgresql/data
+
+  customer-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: customerdb
+      POSTGRES_USER: customer
+      POSTGRES_PASSWORD: customer
+    ports:
+      - "5437:5432"
+    volumes:
+      - customer_pgdata:/var/lib/postgresql/data
+
+  application-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: applicationdb
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+    ports:
+      - "5438:5432"
+    volumes:
+      - application_pgdata:/var/lib/postgresql/data
+
+  agreement-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: agreementdb
+      POSTGRES_USER: agreement
+      POSTGRES_PASSWORD: agreement
+    ports:
+      - "5439:5432"
+    volumes:
+      - agreement_pgdata:/var/lib/postgresql/data
+
+  billing-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: billingdb
+      POSTGRES_USER: billing
+      POSTGRES_PASSWORD: billing
+    ports:
+      - "5440:5432"
+    volumes:
+      - billing_pgdata:/var/lib/postgresql/data
+
+  gateway-service:
+    build:
+      context: .
+      dockerfile: gateway-service/Dockerfile
+    environment:
+      SERVER_PORT: 8080
+    depends_on:
+      - auth-service
+      - inventory-service
+      - procurement-service
+      - reports-service
+      - customer-service
+      - kyc-service
+      - underwriting-service
+      - product-pricing-service
+      - application-service
+      - agreement-service
+      - billing-service
+      - payments-service
+      - schedule-service
+      - edocs-service
+      - bpm-service
+    ports:
+      - "8080:8080"
+
+  customer-service:
+    build:
+      context: .
+      dockerfile: customer-service/Dockerfile
+    environment:
+      SERVER_PORT: 8085
+      DB_URL: jdbc:postgresql://customer-postgres:5432/customerdb
+      DB_USERNAME: customer
+      DB_PASSWORD: customer
+      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+    depends_on:
+      - customer-postgres
+    ports:
+      - "8085:8085"
+
+  kyc-service:
+    build:
+      context: .
+      dockerfile: kyc-service/Dockerfile
+    environment:
+      SERVER_PORT: 8086
+      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+    ports:
+      - "8086:8086"
+
+  underwriting-service:
+    build:
+      context: .
+      dockerfile: underwriting-service/Dockerfile
+    environment:
+      SERVER_PORT: 8087
+      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+    ports:
+      - "8087:8087"
+
+  product-pricing-service:
+    build:
+      context: .
+      dockerfile: product-pricing-service/Dockerfile
+    environment:
+      SERVER_PORT: 8088
+      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+    ports:
+      - "8088:8088"
+
+  application-service:
+    build:
+      context: .
+      dockerfile: application-service/Dockerfile
+    environment:
+      SERVER_PORT: 8089
+      DB_URL: jdbc:postgresql://application-postgres:5432/applicationdb
+      DB_USERNAME: app
+      DB_PASSWORD: app
+      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+      KYC_BASE_URL: http://kyc-service:8086
+      UW_BASE_URL: http://underwriting-service:8087
+      PRICING_BASE_URL: http://product-pricing-service:8088
+    depends_on:
+      - application-postgres
+      - kyc-service
+      - underwriting-service
+      - product-pricing-service
+    ports:
+      - "8089:8089"
+
+  agreement-service:
+    build:
+      context: .
+      dockerfile: agreement-service/Dockerfile
+    environment:
+      SERVER_PORT: 8090
+      DB_URL: jdbc:postgresql://agreement-postgres:5432/agreementdb
+      DB_USERNAME: agreement
+      DB_PASSWORD: agreement
+      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+    depends_on:
+      - agreement-postgres
+    ports:
+      - "8090:8090"
+
+  billing-service:
+    build:
+      context: .
+      dockerfile: billing-service/Dockerfile
+    environment:
+      SERVER_PORT: 8091
+      DB_URL: jdbc:postgresql://billing-postgres:5432/billingdb
+      DB_USERNAME: billing
+      DB_PASSWORD: billing
+      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+      KAFKA_BOOTSTRAP: kafka:9092
+      SCHEDULE_BASE_URL: http://schedule-service:8093
+    depends_on:
+      - billing-postgres
+      - kafka
+    ports:
+      - "8091:8091"
+
+  payments-service:
+    build:
+      context: .
+      dockerfile: payments-service/Dockerfile
+    environment:
+      SERVER_PORT: 8092
+      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+      KAFKA_BOOTSTRAP: kafka:9092
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "8092:8092"
+    depends_on:
+      - kafka
+      - redis
+
+  schedule-service:
+    build:
+      context: .
+      dockerfile: schedule-service/Dockerfile
+    environment:
+      SERVER_PORT: 8093
+      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+    environment:
+      DB_URL: jdbc:postgresql://schedule-postgres:5432/scheduledb
+      DB_USERNAME: schedule
+      DB_PASSWORD: schedule
+    depends_on:
+      - schedule-postgres
+    ports:
+      - "8093:8093"
+
+  edocs-service:
+    build:
+      context: .
+      dockerfile: edocs-service/Dockerfile
+    environment:
+      SERVER_PORT: 8094
+      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+    ports:
+      - "8094:8094"
+
+  bpm-service:
+    build:
+      context: .
+      dockerfile: bpm-service/Dockerfile
+    environment:
+      SERVER_PORT: 8095
+      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+    ports:
+      - "8095:8095"
+
+  schedule-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: scheduledb
+      POSTGRES_USER: schedule
+      POSTGRES_PASSWORD: schedule
+    ports:
+      - "5441:5432"
+    volumes:
+      - schedule_pgdata:/var/lib/postgresql/data
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    environment:
+      - GF_FEATURE_TOGGLES_ENABLE=publicDashboards
+
+  loki:
+    image: grafana/loki:2.9.4
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    ports:
+      - "3100:3100"
+
+  promtail:
+    image: grafana/promtail:2.9.4
+    volumes:
+      - ./monitoring/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: ["--config.file=/etc/promtail/config.yml"]
+    depends_on:
+      - loki
+
+  accounting-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: accountingdb
+      POSTGRES_USER: accounting
+      POSTGRES_PASSWORD: accounting
+    ports:
+      - "5442:5432"
+    volumes:
+      - accounting_pgdata:/var/lib/postgresql/data
+
+  accounting-service:
+    build:
+      context: .
+      dockerfile: accounting-service/Dockerfile
+    environment:
+      SERVER_PORT: 8096
+      DB_URL: jdbc:postgresql://accounting-postgres:5432/accountingdb
+      DB_USERNAME: accounting
+      DB_PASSWORD: accounting
+      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+      KAFKA_BOOTSTRAP: kafka:9092
+    depends_on:
+      - accounting-postgres
+      - kafka
+    ports:
+      - "8096:8096"
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: auth-service/Dockerfile
+    environment:
+      SERVER_PORT: 8081
+      DB_URL: jdbc:postgresql://auth-postgres:5432/authdb
+      DB_USERNAME: auth
+      DB_PASSWORD: auth
+      KAFKA_BOOTSTRAP: kafka:9092
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
+      ADMIN_EMAIL: admin@crp.local
+      ADMIN_PASSWORD: admin
+    depends_on:
+      - auth-postgres
+      - kafka
+      - redis
+    ports:
+      - "8081:8081"
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: inventory-service/Dockerfile
+    environment:
+      SERVER_PORT: 8082
+      DB_URL: jdbc:postgresql://inventory-postgres:5432/inventorydb
+      DB_USERNAME: inventory
+      DB_PASSWORD: inventory
+      KAFKA_BOOTSTRAP: kafka:9092
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+    depends_on:
+      - inventory-postgres
+      - kafka
+      - redis
+    ports:
+      - "8082:8082"
+
+  procurement-service:
+    build:
+      context: .
+      dockerfile: procurement-service/Dockerfile
+    environment:
+      SERVER_PORT: 8083
+      DB_URL: jdbc:postgresql://procurement-postgres:5432/procurementdb
+      DB_USERNAME: proc
+      DB_PASSWORD: proc
+      KAFKA_BOOTSTRAP: kafka:9092
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+    depends_on:
+      - procurement-postgres
+      - kafka
+      - redis
+    ports:
+      - "8083:8083"
+
+  reports-service:
+    build:
+      context: .
+      dockerfile: reports-service/Dockerfile
+    environment:
+      SERVER_PORT: 8084
+      DB_URL: jdbc:postgresql://reports-postgres:5432/reportsdb
+      DB_USERNAME: reports
+      DB_PASSWORD: reports
+      KAFKA_BOOTSTRAP: kafka:9092
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+      INVENTORY_BASE_URL: http://inventory-service:8082
+      PROCUREMENT_BASE_URL: http://procurement-service:8083
+    depends_on:
+      - reports-postgres
+      - inventory-service
+      - procurement-service
+    ports:
+      - "8084:8084"
+
+volumes:
+  auth_pgdata:
+  inventory_pgdata:
+  procurement_pgdata:
+  reports_pgdata:
+  customer_pgdata:
+  application_pgdata:
+  agreement_pgdata:
+  billing_pgdata:
+  schedule_pgdata:
+  accounting_pgdata:

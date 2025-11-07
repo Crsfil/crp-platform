@@ -1,0 +1,26 @@
+server:
+  port: ${SERVER_PORT:8096}
+spring:
+  application:
+    name: accounting-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5442/accountingdb}
+    username: ${DB_USERNAME:accounting}
+    password: ${DB_PASSWORD:accounting}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:kafka:9092}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+security:
+  jwt:
+    secret: ${SECURITY_JWT_SECRET:2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
+  internal-api-key: ${INTERNAL_API_KEY:changeme}
+

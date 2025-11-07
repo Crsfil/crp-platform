@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-init-billing
+      author: system
+      changes:
+        - createTable:
+            tableName: invoice
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: agreement_id, type: BIGINT }
+              - column: { name: due_date, type: DATE }
+              - column: { name: amount, type: NUMERIC(19,2) }
+              - column: { name: status, type: VARCHAR(32) }
+

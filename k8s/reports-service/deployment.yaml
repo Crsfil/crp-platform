@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reports-service
+  namespace: crp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reports-service
+  template:
+    metadata:
+      labels:
+        app: reports-service
+    spec:
+      containers:
+        - name: reports-service
+          image: ghcr.io/your-org/reports-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8084
+          env:
+            - name: SERVER_PORT
+              value: "8084"
+            - name: DB_URL
+              value: jdbc:postgresql://reports-postgres.crp.svc.cluster.local:5432/reportsdb
+            - name: DB_USERNAME
+              value: reports
+            - name: DB_PASSWORD
+              value: reports
+            - name: KAFKA_BOOTSTRAP
+              value: kafka:9092
+            - name: REDIS_HOST
+              value: redis
+            - name: REDIS_PORT
+              value: "6379"
+            - name: SECURITY_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: crp-shared
+                  key: jwt-secret
+            - name: INTERNAL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: crp-shared
+                  key: internal-api-key
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reports-service
+  namespace: crp
+spec:
+  selector:
+    app: reports-service
+  ports:
+    - name: http
+      port: 8084
+      targetPort: 8084

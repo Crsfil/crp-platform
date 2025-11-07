@@ -1,0 +1,24 @@
+server:
+  port: ${SERVER_PORT:8090}
+spring:
+  application:
+    name: agreement-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5439/agreementdb}
+    username: ${DB_USERNAME:agreement}
+    password: ${DB_PASSWORD:agreement}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+security:
+  jwt:
+    secret: ${SECURITY_JWT_SECRET:2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
+  internal-api-key: ${INTERNAL_API_KEY:changeme}
+
