@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bpm-service
+  namespace: crp
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: bpm-service } }
+  template:
+    metadata: { labels: { app: bpm-service } }
+    spec:
+      containers:
+        - name: bpm-service
+          image: ghcr.io/your-org/bpm-service:latest
+          ports: [ { containerPort: 8095 } ]
+          livenessProbe:
+            httpGet: { path: /actuator/health, port: 8095 }
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 8095 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests: { cpu: "100m", memory: "256Mi" }
+            limits: { cpu: "500m", memory: "512Mi" }
+          env:
+            - { name: SERVER_PORT, value: "8095" }
+            - { name: KYC_BASE_URL, value: http://kyc-service:8086 }
+            - { name: UW_BASE_URL, value: http://underwriting-service:8087 }
+            - { name: PRICING_BASE_URL, value: http://product-pricing-service:8088 }
+            - name: SECURITY_JWT_SECRET
+              valueFrom: { secretKeyRef: { name: crp-shared, key: jwt-secret } }
+            - name: INTERNAL_API_KEY
+              valueFrom: { secretKeyRef: { name: crp-shared, key: internal-api-key } }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bpm-service
+  namespace: crp
+spec:
+  selector: { app: bpm-service }
+  ports:
+    - name: http
+      port: 8095
+      targetPort: 8095

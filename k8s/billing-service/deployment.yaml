@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: billing-service
+  namespace: crp
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: billing-service } }
+  template:
+    metadata: { labels: { app: billing-service } }
+    spec:
+      containers:
+        - name: billing-service
+          image: ghcr.io/your-org/billing-service:latest
+          ports: [ { containerPort: 8091 } ]
+          livenessProbe:
+            httpGet: { path: /actuator/health, port: 8091 }
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 8091 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests: { cpu: "100m", memory: "256Mi" }
+            limits: { cpu: "500m", memory: "512Mi" }
+          env:
+            - { name: SERVER_PORT, value: "8091" }
+            - { name: DB_URL, value: jdbc:postgresql://billing-postgres.crp.svc.cluster.local:5432/billingdb }
+            - name: DB_USERNAME
+              valueFrom: { secretKeyRef: { name: billing-db, key: username } }
+            - name: DB_PASSWORD
+              valueFrom: { secretKeyRef: { name: billing-db, key: password } }
+            - { name: KAFKA_BOOTSTRAP, value: kafka:9092 }
+            - { name: SCHEDULE_BASE_URL, value: http://schedule-service:8093 }
+            - name: SECURITY_JWT_SECRET
+              valueFrom: { secretKeyRef: { name: crp-shared, key: jwt-secret } }
+            - name: INTERNAL_API_KEY
+              valueFrom: { secretKeyRef: { name: crp-shared, key: internal-api-key } }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: billing-service
+  namespace: crp
+spec:
+  selector: { app: billing-service }
+  ports:
+    - name: http
+      port: 8091
+      targetPort: 8091

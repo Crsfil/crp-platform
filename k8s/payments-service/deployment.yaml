@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments-service
+  namespace: crp
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: payments-service } }
+  template:
+    metadata: { labels: { app: payments-service } }
+    spec:
+      containers:
+        - name: payments-service
+          image: ghcr.io/your-org/payments-service:latest
+          ports: [ { containerPort: 8092 } ]
+          livenessProbe:
+            httpGet: { path: /actuator/health, port: 8092 }
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 8092 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests: { cpu: "100m", memory: "256Mi" }
+            limits: { cpu: "500m", memory: "512Mi" }
+          env:
+            - { name: SERVER_PORT, value: "8092" }
+            - { name: KAFKA_BOOTSTRAP, value: kafka:9092 }
+            - { name: REDIS_HOST, value: redis }
+            - { name: REDIS_PORT, value: "6379" }
+            - name: SECURITY_JWT_SECRET
+              valueFrom: { secretKeyRef: { name: crp-shared, key: jwt-secret } }
+            - name: INTERNAL_API_KEY
+              valueFrom: { secretKeyRef: { name: crp-shared, key: internal-api-key } }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payments-service
+  namespace: crp
+spec:
+  selector: { app: payments-service }
+  ports:
+    - name: http
+      port: 8092
+      targetPort: 8092

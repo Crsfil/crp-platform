@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agreement-service
+  namespace: crp
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: agreement-service } }
+  template:
+    metadata: { labels: { app: agreement-service } }
+    spec:
+      containers:
+        - name: agreement-service
+          image: ghcr.io/your-org/agreement-service:latest
+          ports: [ { containerPort: 8090 } ]
+          livenessProbe:
+            httpGet: { path: /actuator/health, port: 8090 }
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 8090 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests: { cpu: "100m", memory: "256Mi" }
+            limits: { cpu: "500m", memory: "512Mi" }
+          env:
+            - { name: SERVER_PORT, value: "8090" }
+            - { name: DB_URL, value: jdbc:postgresql://agreement-postgres.crp.svc.cluster.local:5432/agreementdb }
+            - name: DB_USERNAME
+              valueFrom: { secretKeyRef: { name: agreement-db, key: username } }
+            - name: DB_PASSWORD
+              valueFrom: { secretKeyRef: { name: agreement-db, key: password } }
+            - name: SECURITY_JWT_SECRET
+              valueFrom: { secretKeyRef: { name: crp-shared, key: jwt-secret } }
+            - name: INTERNAL_API_KEY
+              valueFrom: { secretKeyRef: { name: crp-shared, key: internal-api-key } }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agreement-service
+  namespace: crp
+spec:
+  selector: { app: agreement-service }
+  ports:
+    - name: http
+      port: 8090
+      targetPort: 8090

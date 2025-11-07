@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: auth-postgres
+  namespace: crp
+spec:
+  serviceName: auth-postgres
+  replicas: 1
+  selector: { matchLabels: { app: auth-postgres } }
+  template:
+    metadata: { labels: { app: auth-postgres } }
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          env:
+            - { name: POSTGRES_DB, value: authdb }
+            - name: POSTGRES_USER
+              valueFrom: { secretKeyRef: { name: auth-db, key: username } }
+            - name: POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: auth-db, key: password } }
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: [ ReadWriteOnce ]
+        resources: { requests: { storage: 5Gi } }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-postgres
+  namespace: crp
+spec:
+  clusterIP: None
+  selector: { app: auth-postgres }
+  ports:
+    - name: db
+      port: 5432
+      targetPort: 5432

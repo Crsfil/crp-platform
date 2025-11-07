@@ -92,6 +92,15 @@ Kubernetes:
 Запуск через Docker (рекомендуется)
 - `docker compose up -d --build` — собирает монорепозиторий и поднимает все сервисы и инфраструктуру.
 
+Один скрипт — Docker
+- `powershell -ExecutionPolicy Bypass -File scripts/up.ps1 -Rebuild` (или просто `scripts\up.ps1`)
+
+Один скрипт — Kubernetes (minikube)
+- Требуется: kubectl, minikube, docker, default StorageClass
+- Запуск: `powershell -ExecutionPolicy Bypass -File scripts/k8s-up.ps1`
+  - Поднимет minikube (если нужно), включит ingress, создаст namespace/secrets/инфру, БД (StatefulSet), соберёт и задеплоит все сервисы, применит ingress для gateway.
+  - По итогу: `kubectl get pods -n crp` и открывайте http://crp.local (пропишите hosts на IP minikube, если нужно) или `kubectl port-forward deploy/gateway-service -n crp 8080:8080`.
+
 Дополнительно (BPM + график + биллинг + платежи):
 - BPM (Flowable): старт процесса заявки
   - `curl -s http://localhost:8095/bpm/process/start -H "X-Internal-API-Key: changeme" -H "Content-Type: application/json" -d '{"customerId":1,"amount":1000000,"termMonths":36,"rateAnnualPct":12}'`

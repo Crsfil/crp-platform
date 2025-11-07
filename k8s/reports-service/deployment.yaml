@@ -19,15 +19,26 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8084
+          livenessProbe:
+            httpGet: { path: /actuator/health, port: 8084 }
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 8084 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests: { cpu: "100m", memory: "256Mi" }
+            limits: { cpu: "500m", memory: "512Mi" }
           env:
             - name: SERVER_PORT
               value: "8084"
             - name: DB_URL
               value: jdbc:postgresql://reports-postgres.crp.svc.cluster.local:5432/reportsdb
             - name: DB_USERNAME
-              value: reports
+              valueFrom: { secretKeyRef: { name: reports-db, key: username } }
             - name: DB_PASSWORD
-              value: reports
+              valueFrom: { secretKeyRef: { name: reports-db, key: password } }
             - name: KAFKA_BOOTSTRAP
               value: kafka:9092
             - name: REDIS_HOST

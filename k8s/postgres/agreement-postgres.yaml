@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: agreement-postgres
+  namespace: crp
+spec:
+  serviceName: agreement-postgres
+  replicas: 1
+  selector: { matchLabels: { app: agreement-postgres } }
+  template:
+    metadata: { labels: { app: agreement-postgres } }
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          env:
+            - { name: POSTGRES_DB, value: agreementdb }
+            - name: POSTGRES_USER
+              valueFrom: { secretKeyRef: { name: agreement-db, key: username } }
+            - name: POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: agreement-db, key: password } }
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: [ ReadWriteOnce ]
+        resources: { requests: { storage: 5Gi } }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agreement-postgres
+  namespace: crp
+spec:
+  clusterIP: None
+  selector: { app: agreement-postgres }
+  ports:
+    - name: db
+      port: 5432
+      targetPort: 5432

@@ -19,15 +19,26 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8082
+          livenessProbe:
+            httpGet: { path: /actuator/health, port: 8082 }
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 8082 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests: { cpu: "100m", memory: "256Mi" }
+            limits: { cpu: "500m", memory: "512Mi" }
           env:
             - name: SERVER_PORT
               value: "8082"
             - name: DB_URL
               value: jdbc:postgresql://inventory-postgres.crp.svc.cluster.local:5432/inventorydb
             - name: DB_USERNAME
-              value: inventory
+              valueFrom: { secretKeyRef: { name: inventory-db, key: username } }
             - name: DB_PASSWORD
-              value: inventory
+              valueFrom: { secretKeyRef: { name: inventory-db, key: password } }
             - name: KAFKA_BOOTSTRAP
               value: kafka:9092
             - name: REDIS_HOST

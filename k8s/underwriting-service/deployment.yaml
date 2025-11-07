@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: underwriting-service
+  namespace: crp
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: underwriting-service } }
+  template:
+    metadata: { labels: { app: underwriting-service } }
+    spec:
+      containers:
+        - name: underwriting-service
+          image: ghcr.io/your-org/underwriting-service:latest
+          ports: [ { containerPort: 8087 } ]
+          livenessProbe:
+            httpGet: { path: /actuator/health, port: 8087 }
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 8087 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests: { cpu: "100m", memory: "256Mi" }
+            limits: { cpu: "500m", memory: "512Mi" }
+          env:
+            - { name: SERVER_PORT, value: "8087" }
+            - name: SECURITY_JWT_SECRET
+              valueFrom: { secretKeyRef: { name: crp-shared, key: jwt-secret } }
+            - name: INTERNAL_API_KEY
+              valueFrom: { secretKeyRef: { name: crp-shared, key: internal-api-key } }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: underwriting-service
+  namespace: crp
+spec:
+  selector: { app: underwriting-service }
+  ports:
+    - name: http
+      port: 8087
+      targetPort: 8087

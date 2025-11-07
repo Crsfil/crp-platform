@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: application-service
+  namespace: crp
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: application-service } }
+  template:
+    metadata: { labels: { app: application-service } }
+    spec:
+      containers:
+        - name: application-service
+          image: ghcr.io/your-org/application-service:latest
+          ports: [ { containerPort: 8089 } ]
+          livenessProbe:
+            httpGet: { path: /actuator/health, port: 8089 }
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 8089 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests: { cpu: "100m", memory: "256Mi" }
+            limits: { cpu: "500m", memory: "512Mi" }
+          env:
+            - { name: SERVER_PORT, value: "8089" }
+            - { name: DB_URL, value: jdbc:postgresql://application-postgres.crp.svc.cluster.local:5432/applicationdb }
+            - name: DB_USERNAME
+              valueFrom: { secretKeyRef: { name: application-db, key: username } }
+            - name: DB_PASSWORD
+              valueFrom: { secretKeyRef: { name: application-db, key: password } }
+            - name: SECURITY_JWT_SECRET
+              valueFrom: { secretKeyRef: { name: crp-shared, key: jwt-secret } }
+            - name: INTERNAL_API_KEY
+              valueFrom: { secretKeyRef: { name: crp-shared, key: internal-api-key } }
+            - { name: KYC_BASE_URL, value: http://kyc-service:8086 }
+            - { name: UW_BASE_URL, value: http://underwriting-service:8087 }
+            - { name: PRICING_BASE_URL, value: http://product-pricing-service:8088 }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: application-service
+  namespace: crp
+spec:
+  selector: { app: application-service }
+  ports:
+    - name: http
+      port: 8089
+      targetPort: 8089
