@@ -23,7 +23,13 @@ public class EquipmentController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('INVENTORY_WRITE') or hasRole('ADMIN')")
-    public Equipment create(@Valid @RequestBody Equipment e) { return repository.save(e); }
+    public org.springframework.http.ResponseEntity<Equipment> create(@Valid @RequestBody Equipment e) {
+        if (e.getStatus() != null && e.getStatus().trim().isEmpty()) {
+            return org.springframework.http.ResponseEntity.badRequest().build();
+        }
+        Equipment saved = repository.save(e);
+        return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(saved);
+    }
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAuthority('INVENTORY_WRITE') or hasRole('ADMIN')")
