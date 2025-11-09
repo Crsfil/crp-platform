@@ -1,6 +1,8 @@
 package com.example.crp.inventory.domain;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
@@ -12,6 +14,7 @@ public class Equipment {
     private Long id;
     private String type;
     private String model;
+    @NotBlank
     private String status;
     private BigDecimal price;
     private OffsetDateTime createdAt;
