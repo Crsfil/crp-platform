@@ -2,12 +2,11 @@ package com.example.crp.schedule.web;
 
 import com.example.crp.schedule.domain.ScheduleItem;
 import com.example.crp.schedule.repo.ScheduleRepository;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestClient;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -16,13 +15,10 @@ import java.util.*;
 @RequestMapping("/schedule")
 public class ScheduleController {
     private final ScheduleRepository repo;
-    private final RestClient pricingClient;
-    private final String internalApiKey;
+    private final WebClient pricingClient;
 
-    public ScheduleController(ScheduleRepository repo,
-                              @Value("${pricing.base-url:http://product-pricing-service:8088}") String pricingBase,
-                              @Value("${security.internal-api-key:}") String internalApiKey) {
-        this.repo = repo; this.pricingClient = RestClient.builder().baseUrl(pricingBase).build(); this.internalApiKey=internalApiKey;
+    public ScheduleController(ScheduleRepository repo, WebClient pricingClient) {
+        this.repo = repo; this.pricingClient = pricingClient;
     }
 
     @PostMapping("/generate")
@@ -36,9 +32,8 @@ public class ScheduleController {
                         .queryParam("termMonths", termMonths)
                         .queryParam("rateAnnualPct", rateAnnualPct)
                         .build())
-                .header("X-Internal-API-Key", internalApiKey)
                 .accept(MediaType.APPLICATION_JSON)
-                .retrieve().body(Map.class);
+                .retrieve().bodyToMono(Map.class).block();
         List<Map<String,Object>> schedule = (List<Map<String,Object>>) res.get("schedule");
         List<ScheduleItem> out = new ArrayList<>();
         LocalDate base = LocalDate.now().plusMonths(1);
@@ -67,4 +62,3 @@ public class ScheduleController {
         return Map.of("status","INVOICED");
     }
 }
-

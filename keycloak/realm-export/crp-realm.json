@@ -73,7 +73,21 @@
             "claim.name": "authorities",
             "jsonType.label": "String"
           }
-        }
+        },
+        { "name": "aud-inventory", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "inventory-service", "id.token.claim": "false", "access.token.claim": "true"} },
+        { "name": "aud-procurement", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "procurement-service", "id.token.claim": "false", "access.token.claim": "true"} },
+        { "name": "aud-customer", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "customer-service", "id.token.claim": "false", "access.token.claim": "true"} },
+        { "name": "aud-kyc", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "kyc-service", "id.token.claim": "false", "access.token.claim": "true"} },
+        { "name": "aud-underwriting", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "underwriting-service", "id.token.claim": "false", "access.token.claim": "true"} },
+        { "name": "aud-pricing", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "product-pricing-service", "id.token.claim": "false", "access.token.claim": "true"} },
+        { "name": "aud-application", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "application-service", "id.token.claim": "false", "access.token.claim": "true"} },
+        { "name": "aud-agreement", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "agreement-service", "id.token.claim": "false", "access.token.claim": "true"} },
+        { "name": "aud-schedule", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "schedule-service", "id.token.claim": "false", "access.token.claim": "true"} },
+        { "name": "aud-billing", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "billing-service", "id.token.claim": "false", "access.token.claim": "true"} },
+        { "name": "aud-payments", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "payments-service", "id.token.claim": "false", "access.token.claim": "true"} },
+        { "name": "aud-edocs", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "edocs-service", "id.token.claim": "false", "access.token.claim": "true"} },
+        { "name": "aud-bpm", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "bpm-service", "id.token.claim": "false", "access.token.claim": "true"} },
+        { "name": "aud-accounting", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "accounting-service", "id.token.claim": "false", "access.token.claim": "true"} }
       ]
     },
     {
@@ -100,7 +114,81 @@
             "id.token.claim": "false",
             "access.token.claim": "true"
           }
+        },
+        {
+          "name": "audience-procurement",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "procurement-service",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
         }
+      ]
+    },
+    { "clientId": "schedule-service", "name": "schedule-service", "protocol": "openid-connect", "bearerOnly": true },
+    { "clientId": "product-pricing-service", "name": "product-pricing-service", "protocol": "openid-connect", "bearerOnly": true },
+    {
+      "clientId": "schedule-service-caller",
+      "name": "schedule-service-caller",
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "secret": "schedule-secret",
+      "protocolMappers": [
+        { "name": "audience-pricing", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "product-pricing-service", "id.token.claim": "false", "access.token.claim": "true"} }
+      ]
+    },
+    {
+      "clientId": "bpm-service-caller",
+      "name": "bpm-service-caller",
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "secret": "bpm-secret",
+      "protocolMappers": [
+        { "name": "audience-kyc", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "kyc-service", "id.token.claim": "false", "access.token.claim": "true"} },
+        { "name": "audience-underwriting", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "underwriting-service", "id.token.claim": "false", "access.token.claim": "true"} },
+        { "name": "audience-pricing", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "product-pricing-service", "id.token.claim": "false", "access.token.claim": "true"} }
+      ]
+    }
+    { "clientId": "procurement-service", "name": "procurement-service", "protocol": "openid-connect", "bearerOnly": true },
+    { "clientId": "customer-service", "name": "customer-service", "protocol": "openid-connect", "bearerOnly": true },
+    { "clientId": "kyc-service", "name": "kyc-service", "protocol": "openid-connect", "bearerOnly": true },
+    { "clientId": "underwriting-service", "name": "underwriting-service", "protocol": "openid-connect", "bearerOnly": true },
+    { "clientId": "product-pricing-service", "name": "product-pricing-service", "protocol": "openid-connect", "bearerOnly": true },
+    { "clientId": "application-service", "name": "application-service", "protocol": "openid-connect", "bearerOnly": true },
+    { "clientId": "agreement-service", "name": "agreement-service", "protocol": "openid-connect", "bearerOnly": true },
+    { "clientId": "schedule-service", "name": "schedule-service", "protocol": "openid-connect", "bearerOnly": true },
+    { "clientId": "billing-service", "name": "billing-service", "protocol": "openid-connect", "bearerOnly": true },
+    { "clientId": "payments-service", "name": "payments-service", "protocol": "openid-connect", "bearerOnly": true },
+    { "clientId": "edocs-service", "name": "edocs-service", "protocol": "openid-connect", "bearerOnly": true },
+    { "clientId": "bpm-service", "name": "bpm-service", "protocol": "openid-connect", "bearerOnly": true },
+    { "clientId": "accounting-service", "name": "accounting-service", "protocol": "openid-connect", "bearerOnly": true },
+    {
+      "clientId": "billing-service-caller",
+      "name": "billing-service-caller",
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "secret": "billing-secret",
+      "protocolMappers": [
+        { "name": "audience-schedule", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "schedule-service", "id.token.claim": "false", "access.token.claim": "true"} }
+      ]
+    },
+    {
+      "clientId": "application-service-caller",
+      "name": "application-service-caller",
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "secret": "application-secret",
+      "protocolMappers": [
+        { "name": "audience-kyc", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "kyc-service", "id.token.claim": "false", "access.token.claim": "true"} },
+        { "name": "audience-underwriting", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "underwriting-service", "id.token.claim": "false", "access.token.claim": "true"} },
+        { "name": "audience-pricing", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "product-pricing-service", "id.token.claim": "false", "access.token.claim": "true"} }
       ]
     }
   ]

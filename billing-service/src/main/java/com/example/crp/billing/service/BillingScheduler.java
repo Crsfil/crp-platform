@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClient;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -15,22 +15,22 @@ import java.util.Map;
 @Component
 public class BillingScheduler {
     private final InvoiceRepository invoices;
-    private final RestClient scheduleClient;
-    private final String internalApiKey;
+    private final WebClient scheduleClient;
     private final KafkaTemplate<String,Object> kafka;
 
     public BillingScheduler(InvoiceRepository invoices,
-                            @Value("${schedule.base-url:http://schedule-service:8093}") String scheduleBase,
-                            @Value("${security.internal-api-key:}") String internalApiKey,
+                            WebClient scheduleClient,
                             KafkaTemplate<String, Object> kafka) {
-        this.invoices = invoices; this.scheduleClient = RestClient.builder().baseUrl(scheduleBase).build(); this.internalApiKey=internalApiKey; this.kafka = kafka;
+        this.invoices = invoices; this.scheduleClient = scheduleClient; this.kafka = kafka;
     }
 
     @Scheduled(fixedDelayString = "${billing.autorun-ms:60000}")
     public void issueDueInvoices() {
-        List<Map> due = scheduleClient.get().uri(uriBuilder -> uriBuilder.path("/schedule/due").queryParam("date", LocalDate.now()).build())
-                .header("X-Internal-API-Key", internalApiKey)
-                .retrieve().body(List.class);
+        List<Map> due = scheduleClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/schedule/due").queryParam("date", LocalDate.now()).build())
+                .retrieve()
+                .bodyToMono(List.class)
+                .block();
         if (due == null) return;
         for (Map item : due) {
             Number id = (Number) item.get("id");
@@ -43,10 +43,10 @@ public class BillingScheduler {
             invoices.save(inv);
             // mark schedule item invoiced
             scheduleClient.post().uri("/schedule/"+id.longValue()+"/markInvoiced")
-                    .header("X-Internal-API-Key", internalApiKey)
-                    .retrieve().toBodilessEntity();
+                    .retrieve()
+                    .toBodilessEntity()
+                    .block();
             kafka.send("invoice.issued", Map.of("invoiceId", inv.getId(), "agreementId", inv.getAgreementId(), "amount", inv.getAmount()));
         }
     }
 }
-

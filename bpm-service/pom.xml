@@ -15,6 +15,10 @@
       <artifactId>flowable-spring-boot-starter-process</artifactId>
       <version>6.8.0</version>
     </dependency>
+    <dependency>
+      <groupId>com.example.crp</groupId>
+      <artifactId>service-auth-client</artifactId>
+    </dependency>
   </dependencies>
   <build><plugins><plugin><groupId>org.springframework.boot</groupId><artifactId>spring-boot-maven-plugin</artifactId></plugin></plugins></build>
 </project>

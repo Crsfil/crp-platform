@@ -3,11 +3,9 @@ package com.example.crp.reports.service;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
@@ -15,23 +13,20 @@ import java.util.Map;
 
 @Service
 public class ReportGenerator {
-    private final RestClient inventoryClient;
-    private final RestClient procurementClient;
-    private final String internalApiKey;
+    private final WebClient inventoryClient;
+    private final WebClient procurementClient;
 
-    public ReportGenerator(@Value("${inventory.base-url:http://inventory-service:8082}") String inventoryBase,
-                           @Value("${procurement.base-url:http://procurement-service:8083}") String procurementBase,
-                           @Value("${security.internal-api-key:}") String internalApiKey) {
-        this.inventoryClient = RestClient.builder().baseUrl(inventoryBase).build();
-        this.procurementClient = RestClient.builder().baseUrl(procurementBase).build();
-        this.internalApiKey = internalApiKey;
+    public ReportGenerator(WebClient inventoryClient, WebClient procurementClient) {
+        this.inventoryClient = inventoryClient;
+        this.procurementClient = procurementClient;
     }
 
     public byte[] equipmentByStatusXlsx() {
         List<Map<String, Object>> equipment = inventoryClient.get().uri("/equipment")
-                .header("X-Internal-API-Key", internalApiKey)
                 .accept(MediaType.APPLICATION_JSON)
-                .retrieve().body(List.class);
+                .retrieve()
+                .bodyToMono(List.class)
+                .block();
         try (var wb = new XSSFWorkbook(); var out = new ByteArrayOutputStream()) {
             Sheet sheet = wb.createSheet("Equipment");
             int r = 0;
@@ -59,9 +54,10 @@ public class ReportGenerator {
 
     public byte[] requestsByStatusXlsx() {
         List<Map<String, Object>> reqs = procurementClient.get().uri("/requests")
-                .header("X-Internal-API-Key", internalApiKey)
                 .accept(MediaType.APPLICATION_JSON)
-                .retrieve().body(List.class);
+                .retrieve()
+                .bodyToMono(List.class)
+                .block();
         try (var wb = new XSSFWorkbook(); var out = new ByteArrayOutputStream()) {
             Sheet sheet = wb.createSheet("Requests");
             int r = 0;
@@ -85,4 +81,3 @@ public class ReportGenerator {
 
     private String s(Object o) { return o == null ? "" : o.toString(); }
 }
-

@@ -9,7 +9,17 @@
 - Конфигурация:
   - `gateway-service/src/main/resources/application.yml`: `spring.data.redis.host/port`.
   - `docker-compose.yml`: переменные `REDIS_HOST/REDIS_PORT` для `gateway-service`.
-- Использование: `refresh(sessionId, () -> callIdpRefresh())` возвращает `Mono<TokenPair>`.
+- Эндпоинт BFF: `POST /bff/refresh` — читает httpOnly cookie (по умолчанию `CRP_RT`), делает refresh c координацией в Redis и:
+  - возвращает JSON `{ "access_token": "...", "expires_in": 900 }`;
+  - заменяет refresh‑cookie на новый (httpOnly, `secure`/`SameSite` из `bff.cookie.*`).
+- Входные параметры:
+  - cookie `CRP_RT` (имя можно изменить `BFF_COOKIE_NAME`).
+
+### Авто‑refresh на шлюзе при истекающем AT
+- Глобальный фильтр `PreemptiveRefreshFilter`:
+  - перехватывает все запросы, кроме `/bff/**`, `/auth/**`, `/oidc/**`, `swagger/actuator`;
+  - если в `Authorization: Bearer` токен истекает в ближайшие 30 с (по `exp`), выполняет refresh (single‑flight) и повторяет запрос с новым AT;
+  - обновляет refresh‑cookie в ответе.
 
 ## Ротация refresh‑токена/сессий в Keycloak
 - Включено в экспорт Realm: `keycloak/realm-export/crp-realm.json`.
@@ -51,3 +61,10 @@
 - Keycloak после refresh выдаёт новый refresh; старый сразу недействителен.
 - Ресурс‑сервисы отклоняют токены без корректной `aud`.
 - Межсервисные вызовы ходят с service‑JWT; ключ заголовка больше не нужен.
+
+## Метрики (Prometheus/Micrometer)
+- `bff.refresh.singleflight` (tag `event`): `lock_acquired`, `lock_contended`, `refresh_success`, `refresh_error`.
+- `bff.refresh.singleflight.timer`: время выполнения refresh инициатором (Timer).
+- `gateway.refresh.preemptive` (tag `event`): `triggered`, `success`, `error` — проактивный refresh по `exp`.
+- `gateway.refresh.retry401` (tag `event`): `triggered`, `success`, `error` — повтор после 401.
+- `bff.refresh.endpoint` (tag `event`): `attempt`, `success`, `error` — ручной `/bff/refresh`.

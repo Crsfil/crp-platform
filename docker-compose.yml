@@ -225,11 +225,13 @@ services:
       DB_USERNAME: app
       DB_PASSWORD: app
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
       KYC_BASE_URL: http://kyc-service:8086
       UW_BASE_URL: http://underwriting-service:8087
       PRICING_BASE_URL: http://product-pricing-service:8088
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
+      OIDC_ISSUER: http://keycloak:8080/realms/crp
+      S2S_CLIENT_ID: application-service-caller
+      S2S_CLIENT_SECRET: application-secret
     depends_on:
       - application-postgres
       - kyc-service
@@ -267,10 +269,12 @@ services:
       DB_USERNAME: billing
       DB_PASSWORD: billing
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
       KAFKA_BOOTSTRAP: kafka:9092
       SCHEDULE_BASE_URL: http://schedule-service:8093
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
+      OIDC_ISSUER: http://keycloak:8080/realms/crp
+      S2S_CLIENT_ID: billing-service-caller
+      S2S_CLIENT_SECRET: billing-secret
     depends_on:
       - billing-postgres
       - kafka
@@ -285,7 +289,6 @@ services:
     environment:
       SERVER_PORT: 8092
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
       KAFKA_BOOTSTRAP: kafka:9092
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -304,7 +307,9 @@ services:
     environment:
       SERVER_PORT: 8093
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+      OIDC_ISSUER: http://keycloak:8080/realms/crp
+      S2S_CLIENT_ID: schedule-service-caller
+      S2S_CLIENT_SECRET: schedule-secret
       DB_URL: jdbc:postgresql://schedule-postgres:5432/scheduledb
       DB_USERNAME: schedule
       DB_PASSWORD: schedule
@@ -322,7 +327,6 @@ services:
     environment:
       SERVER_PORT: 8094
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     ports:
       - "8094:8094"
@@ -336,7 +340,9 @@ services:
     environment:
       SERVER_PORT: 8095
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+      OIDC_ISSUER: http://keycloak:8080/realms/crp
+      S2S_CLIENT_ID: bpm-service-caller
+      S2S_CLIENT_SECRET: bpm-secret
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     ports:
       - "8095:8095"
@@ -452,7 +458,6 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     depends_on:
       - inventory-postgres
@@ -475,7 +480,6 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     depends_on:
       - procurement-postgres
@@ -498,10 +502,12 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
       INVENTORY_BASE_URL: http://inventory-service:8082
       PROCUREMENT_BASE_URL: http://procurement-service:8083
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
+      OIDC_ISSUER: http://keycloak:8080/realms/crp
+      S2S_CLIENT_ID: reports-service
+      S2S_CLIENT_SECRET: reports-secret
     depends_on:
       - reports-postgres
       - inventory-service

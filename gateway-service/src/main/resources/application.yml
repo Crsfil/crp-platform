@@ -68,6 +68,7 @@ bff:
   issuer: ${BFF_ISSUER:http://keycloak:8080/realms/crp}
   client-id: ${BFF_CLIENT_ID:crp-cli}
   cookie:
+    name: ${BFF_COOKIE_NAME:CRP_RT}
     secure: ${BFF_COOKIE_SECURE:false}
     same-site: ${BFF_COOKIE_SAMESITE:Lax}
 

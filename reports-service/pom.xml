@@ -61,6 +61,10 @@
         </dependency>
         <dependency>
             <groupId>com.example.crp</groupId>
+            <artifactId>service-auth-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.crp</groupId>
             <artifactId>common-security</artifactId>
         </dependency>
         <dependency>

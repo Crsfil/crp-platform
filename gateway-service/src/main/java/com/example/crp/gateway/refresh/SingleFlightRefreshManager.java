@@ -2,6 +2,9 @@ package com.example.crp.gateway.refresh;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.Timer;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -23,12 +26,18 @@ public class SingleFlightRefreshManager {
     private static final String RESULT_KEY_FMT = "bff:refresh:result:%s";
 
     private final ReactiveStringRedisTemplate redis;
+    private final MeterRegistry meterRegistry;
+    private final Timer refreshTimer;
     private final ObjectMapper mapper = new ObjectMapper();
 
     public record TokenPair(String accessToken, String refreshToken) {}
 
-    public SingleFlightRefreshManager(ReactiveStringRedisTemplate redisTemplate) {
+    public SingleFlightRefreshManager(ReactiveStringRedisTemplate redisTemplate, MeterRegistry meterRegistry) {
         this.redis = redisTemplate;
+        this.meterRegistry = meterRegistry;
+        this.refreshTimer = Timer.builder("bff.refresh.singleflight.timer")
+                .description("Time spent performing token refresh (single initiator)")
+                .register(meterRegistry);
     }
 
     public Mono<TokenPair> refresh(String sessionId, java.util.function.Supplier<Mono<TokenPair>> refresher) {
@@ -38,9 +47,15 @@ public class SingleFlightRefreshManager {
         String lockVal = UUID.randomUUID().toString();
 
         return tryLock(lockKey, lockVal, Duration.ofSeconds(7))
-                .flatMap(locked -> locked ?
-                        doRefreshAndPublish(resultKey, lockKey, lockVal, refresher)
-                        : waitForResult(resultKey))
+                .flatMap(locked -> {
+                    if (locked) {
+                        meterRegistry.counter("bff.refresh.singleflight", Tags.of("event","lock_acquired")).increment();
+                        return doRefreshAndPublish(resultKey, lockKey, lockVal, refresher);
+                    } else {
+                        meterRegistry.counter("bff.refresh.singleflight", Tags.of("event","lock_contended")).increment();
+                        return waitForResult(resultKey);
+                    }
+                })
                 .switchIfEmpty(waitForResult(resultKey));
     }
 
@@ -54,7 +69,15 @@ public class SingleFlightRefreshManager {
                 .flatMap(tp -> redis.opsForValue()
                         .set(resultKey, toJson(tp), Duration.ofSeconds(60))
                         .thenReturn(tp))
-                .onErrorResume(e -> redis.opsForValue().set(resultKey, errorJson(e), Duration.ofSeconds(5)).then(Mono.error(e)))
+                .doOnSuccess(tp -> meterRegistry.counter("bff.refresh.singleflight", Tags.of("event","refresh_success")).increment())
+                .transform(mono -> {
+                    Timer.Sample sample = Timer.start();
+                    return mono.doFinally(sig -> sample.stop(refreshTimer));
+                })
+                .onErrorResume(e -> {
+                    meterRegistry.counter("bff.refresh.singleflight", Tags.of("event","refresh_error")).increment();
+                    return redis.opsForValue().set(resultKey, errorJson(e), Duration.ofSeconds(5)).then(Mono.error(e));
+                })
                 .doFinally(sig -> safelyUnlock(lockKey, lockVal).subscribe());
     }
 

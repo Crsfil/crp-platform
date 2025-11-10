@@ -23,3 +23,8 @@ security:
   internal-api-key: ${INTERNAL_API_KEY:changeme}
 pricing:
   base-url: ${PRICING_BASE_URL:http://product-pricing-service:8088}
+
+crp:
+  security:
+    jwt:
+      enforce-audience: true

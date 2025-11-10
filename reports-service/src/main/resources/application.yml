@@ -19,6 +19,11 @@ spring:
     redis:
       host: ${REDIS_HOST:redis}
       port: ${REDIS_PORT:6379}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:${SECURITY_JWT_ISSUER:http://auth-service:8081}}
 
 management:
   endpoints:
@@ -35,9 +40,8 @@ inventory:
   base-url: ${INVENTORY_BASE_URL:http://inventory-service:8082}
 procurement:
   base-url: ${PROCUREMENT_BASE_URL:http://procurement-service:8083}
-spring:
+
+crp:
   security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${SECURITY_JWT_ISSUER:http://auth-service:8081}
+    jwt:
+      enforce-audience: true

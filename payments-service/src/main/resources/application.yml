@@ -18,6 +18,11 @@ security:
   jwt:
     secret: ${SECURITY_JWT_SECRET:2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
   internal-api-key: ${INTERNAL_API_KEY:changeme}
+
+crp:
+  security:
+    jwt:
+      enforce-audience: true
 spring:
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP:kafka:9092}

@@ -19,6 +19,11 @@ spring:
     redis:
       host: ${REDIS_HOST:redis}
       port: ${REDIS_PORT:6379}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:${SECURITY_JWT_ISSUER:http://auth-service:8081}}
 
 management:
   endpoints:
@@ -26,14 +31,12 @@ management:
       exposure:
         include: health,info,prometheus
 
-spring:
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${SECURITY_JWT_ISSUER:http://auth-service:8081}
-
 security:
   jwt:
     secret: ${SECURITY_JWT_SECRET:2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
   internal-api-key: ${INTERNAL_API_KEY:changeme}
+
+crp:
+  security:
+    jwt:
+      enforce-audience: true

@@ -28,3 +28,7 @@ underwriting:
 pricing:
   base-url: ${PRICING_BASE_URL:http://product-pricing-service:8088}
 
+crp:
+  security:
+    jwt:
+      enforce-audience: true
