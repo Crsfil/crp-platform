@@ -23,9 +23,10 @@ CRP Platform
 Локальная инфраструктура (docker-compose): Kafka+Zookeeper, Redis, 4 Postgres.
 Kubernetes-манифесты в каталоге `k8s/` (images и БД/брокеры укажи под свою инсталляцию).
 
-Быстрый старт (Docker):
+Быстрый старт (Docker, вариант A — Keycloak + RS256):
 - Один шаг: `docker compose up -d --build` (в каталоге `crp-platform/`)
-- Поднимутся: Kafka+ZK, Redis, 4 Postgres и все 4 сервисa (образы собираются автоматически)
+- Поднимутся: Keycloak (порт 18080), Kafka+ZK, Redis, Postgres’ы и все сервисы.
+- В Keycloak импортируется realm `crp` с пользователем `admin@crp.local` / `admin`, ролями `ADMIN/MANAGER/ANALYST/USER`, клиентом `crp-cli`.
 
 Контуры по умолчанию:
 - auth: http://localhost:8081 (Swagger UI: /swagger-ui/index.html)
@@ -48,10 +49,18 @@ Kubernetes:
 - Применить неймспейс: `kubectl apply -f k8s/namespace.yaml`
 - Для сервисов: отредактируй `image` и `DB_URL`/Kafka/Redis хосты под свой кластер и применяй `kubectl apply -f k8s/<service>/deployment.yaml`.
 
+Получение токена (Keycloak):
+- Вариант 1 (BFF, браузер): открой `http://localhost:8080/auth/login` — пройдёт авторизация через Keycloak, `refresh_token` сохранится в httpOnly cookie, шлюз сам будет прокидывать `Authorization` в микросервисы.
+- Вариант 2 (CLI/dev): Direct Access Grants — `curl -s -X POST http://localhost:18080/realms/crp/protocol/openid-connect/token -H "Content-Type: application/x-www-form-urlencoded" -d "client_id=crp-cli" -d "grant_type=password" -d "username=admin@crp.local" -d "password=admin" | jq -r .access_token`
+- JWKS: `http://localhost:18080/realms/crp/protocol/openid-connect/certs`
+
+Что дальше (усиление безопасности): см. `docs/security-hardening.md`. Включает:
+- single-flight refresh в gateway (Redis-локи),
+- ротацию refresh в Keycloak (revoke + max reuse = 0),
+- требование `aud` во всех ресурс-сервисах и переход на service-to-service JWT вместо `X-Internal-API-Key`.
+
 Проверка сценария (curl):
-1) Логин админом (создается автоматически):
-   - `curl -s http://localhost:8081/auth/login -H "Content-Type: application/json" -d '{"email":"admin@crp.local","password":"admin"}'`
-   - Скопируй `accessToken`
+1) Получи `AT=$(...)` как выше
 2) Создай технику:
    - `curl -s http://localhost:8082/equipment -H "Authorization: Bearer $AT" -H "Content-Type: application/json" -d '{"type":"truck","model":"KamAZ","status":"AVAILABLE","price":1000000}'`
 3) Создай заявку:
@@ -72,8 +81,12 @@ Kubernetes:
 - CI/CD: пайплайн (build → test → integration-test → docker build/push)
 
 Примечание:
-- Security сейчас в basic режиме/permitAll для ряда эндпойнтов — замени на JWT.
+- Все сервисы переведены на проверку JWT по RS256 через OAuth2 Resource Server и Issuer Keycloak (JWKS). Для внутренних машинных вызовов временно поддерживается заголовок `X-Internal-API-Key`.
+- BFF в `gateway-service`: маршруты `/auth/login`, `/auth/callback`, `/auth/logout`. Refresh хранится в `HttpOnly` cookie, access обновляется автоматически и добавляется в заголовок при проксировании.
 - Kafka/Redis конфиги подключены, но бизнес-логика событий/кэшей не реализована — добавляй по мере разработки.
+
+Вариант B (на будущее): BFF
+- Для веб‑клиента добавьте слой BFF в `gateway-service`, храните refresh‑токен в httpOnly cookie и делайте авто‑refresh. В этом репо пока используется прямое получение токена для dev.
 
 Навигация по исходникам (ничего править не нужно — всё готово)
 - Маршрутизация API: `gateway-service/src/main/resources/application.yml:1`

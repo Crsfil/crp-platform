@@ -24,6 +24,8 @@
         <module>gateway-service</module>
         <module>bpm-service</module>
         <module>accounting-service</module>
+        <module>common-security</module>
+        <module>service-auth-client</module>
     </modules>
 
     <properties>

@@ -3,6 +3,12 @@ server:
 spring:
   application:
     name: payments-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # keeps local profile runnable without env var
+          issuer-uri: ${SECURITY_JWT_ISSUER:http://keycloak:8080/realms/crp}
 management:
   endpoints:
     web:

@@ -1,6 +1,5 @@
 package com.example.crp.accounting.config;
 
-import io.jsonwebtoken.Jwts;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -8,21 +7,22 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.crypto.SecretKey;
 import java.io.IOException;
-import java.util.List;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
-    @Bean public SecurityFilterChain filterChain(HttpSecurity http, JwtFilter filter) throws Exception { http.csrf(csrf->csrf.disable()).authorizeHttpRequests(a->a.requestMatchers("/actuator/**","/v3/api-docs/**","/swagger-ui.html","/swagger-ui/**").permitAll().anyRequest().authenticated()).addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class); return http.build(); }
-    @Bean public JwtFilter jwtFilter(@Value("${security.jwt.secret}") String s, @Value("${security.internal-api-key:}") String k){ return new JwtFilter(s,k);}    
-    static class JwtFilter extends OncePerRequestFilter{ private final SecretKey key; private final String apiKey; JwtFilter(String s,String apiKey){ this.key=io.jsonwebtoken.security.Keys.hmacShaKeyFor(io.jsonwebtoken.io.Decoders.BASE64.decode(s)); this.apiKey=apiKey; }
-        @Override protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain) throws ServletException, IOException { String api=req.getHeader("X-Internal-API-Key"); if(api!=null && api.equals(apiKey)){ var auth=new org.springframework.security.authentication.UsernamePasswordAuthenticationToken("internal",null, java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ANALYST"))); SecurityContextHolder.getContext().setAuthentication(auth); chain.doFilter(req,res); return; } String h=req.getHeader("Authorization"); if(h!=null && h.startsWith("Bearer ")){ try{ var c=Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(h.substring(7)).getBody(); @SuppressWarnings("unchecked") List<String> r=(List<String>)c.get("roles"); String e=(String)c.get("email"); var a=new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(e,null,r.stream().map(x->new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_"+x)).toList()); SecurityContextHolder.getContext().setAuthentication(a);}catch(Exception ignored){} } chain.doFilter(req,res);} }
+    @Bean public SecurityFilterChain filterChain(HttpSecurity http, InternalApiKeyFilter internal) throws Exception { http.csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(a->a.requestMatchers("/actuator/**","/v3/api-docs/**","/swagger-ui.html","/swagger-ui/**").permitAll().anyRequest().authenticated()).addFilterBefore(internal, UsernamePasswordAuthenticationFilter.class).oauth2ResourceServer(o->o.jwt(jwt->jwt.jwtAuthenticationConverter(jwtAuthConverter()))); return http.build(); }
+    @Bean public JwtAuthenticationConverter jwtAuthConverter(){ JwtGrantedAuthoritiesConverter gac=new JwtGrantedAuthoritiesConverter(); gac.setAuthoritiesClaimName("authorities"); gac.setAuthorityPrefix(""); JwtGrantedAuthoritiesConverter roles=new JwtGrantedAuthoritiesConverter(); roles.setAuthoritiesClaimName("roles"); roles.setAuthorityPrefix("ROLE_"); JwtAuthenticationConverter c=new JwtAuthenticationConverter(); c.setJwtGrantedAuthoritiesConverter(jwt->{ var a=gac.convert(jwt); a.addAll(roles.convert(jwt)); return a;}); return c; }
+    @Bean public InternalApiKeyFilter internalApiKeyFilter(@Value("${security.internal-api-key:}") String apiKey){ return new InternalApiKeyFilter(apiKey, "ROLE_ANALYST"); }
+    static class InternalApiKeyFilter extends OncePerRequestFilter{ private final String apiKey; private final String role; InternalApiKeyFilter(String apiKey,String role){ this.apiKey=apiKey; this.role=role; } @Override protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain) throws ServletException, IOException { String api=req.getHeader("X-Internal-API-Key"); if(api!=null && !api.isEmpty() && api.equals(apiKey)){ var auth=new org.springframework.security.authentication.UsernamePasswordAuthenticationToken("internal",null, java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority(role))); org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(auth);} chain.doFilter(req,res);} }
 }
-

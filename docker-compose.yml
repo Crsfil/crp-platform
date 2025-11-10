@@ -1,5 +1,15 @@
 version: "3.8"
 services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.5
+    command: ["start-dev","--import-realm"]
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "18080:8080"
+    volumes:
+      - ./keycloak/realm-export:/opt/keycloak/data/import:ro
   zookeeper:
     image: confluentinc/cp-zookeeper:7.6.0
     environment:
@@ -120,8 +130,14 @@ services:
       dockerfile: gateway-service/Dockerfile
     environment:
       SERVER_PORT: 8080
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
+      BFF_ISSUER: http://keycloak:8080/realms/crp
+      BFF_CLIENT_ID: crp-cli
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     depends_on:
       - auth-service
+      - keycloak
       - inventory-service
       - procurement-service
       - reports-service
@@ -150,8 +166,10 @@ services:
       DB_PASSWORD: customer
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     depends_on:
       - customer-postgres
+      - keycloak
     ports:
       - "8085:8085"
 
@@ -163,8 +181,11 @@ services:
       SERVER_PORT: 8086
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     ports:
       - "8086:8086"
+    depends_on:
+      - keycloak
 
   underwriting-service:
     build:
@@ -174,8 +195,11 @@ services:
       SERVER_PORT: 8087
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     ports:
       - "8087:8087"
+    depends_on:
+      - keycloak
 
   product-pricing-service:
     build:
@@ -185,8 +209,11 @@ services:
       SERVER_PORT: 8088
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     ports:
       - "8088:8088"
+    depends_on:
+      - keycloak
 
   application-service:
     build:
@@ -202,11 +229,13 @@ services:
       KYC_BASE_URL: http://kyc-service:8086
       UW_BASE_URL: http://underwriting-service:8087
       PRICING_BASE_URL: http://product-pricing-service:8088
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     depends_on:
       - application-postgres
       - kyc-service
       - underwriting-service
       - product-pricing-service
+      - keycloak
     ports:
       - "8089:8089"
 
@@ -221,8 +250,10 @@ services:
       DB_PASSWORD: agreement
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     depends_on:
       - agreement-postgres
+      - keycloak
     ports:
       - "8090:8090"
 
@@ -239,9 +270,11 @@ services:
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
       KAFKA_BOOTSTRAP: kafka:9092
       SCHEDULE_BASE_URL: http://schedule-service:8093
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     depends_on:
       - billing-postgres
       - kafka
+      - keycloak
     ports:
       - "8091:8091"
 
@@ -256,11 +289,13 @@ services:
       KAFKA_BOOTSTRAP: kafka:9092
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     ports:
       - "8092:8092"
     depends_on:
       - kafka
       - redis
+      - keycloak
 
   schedule-service:
     build:
@@ -270,12 +305,13 @@ services:
       SERVER_PORT: 8093
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
-    environment:
       DB_URL: jdbc:postgresql://schedule-postgres:5432/scheduledb
       DB_USERNAME: schedule
       DB_PASSWORD: schedule
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     depends_on:
       - schedule-postgres
+      - keycloak
     ports:
       - "8093:8093"
 
@@ -287,8 +323,11 @@ services:
       SERVER_PORT: 8094
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     ports:
       - "8094:8094"
+    depends_on:
+      - keycloak
 
   bpm-service:
     build:
@@ -298,8 +337,11 @@ services:
       SERVER_PORT: 8095
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     ports:
       - "8095:8095"
+    depends_on:
+      - keycloak
 
   schedule-postgres:
     image: postgres:16-alpine
@@ -367,9 +409,11 @@ services:
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
       KAFKA_BOOTSTRAP: kafka:9092
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     depends_on:
       - accounting-postgres
       - kafka
+      - keycloak
     ports:
       - "8096:8096"
 
@@ -409,10 +453,12 @@ services:
       REDIS_PORT: 6379
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     depends_on:
       - inventory-postgres
       - kafka
       - redis
+      - keycloak
     ports:
       - "8082:8082"
 
@@ -430,10 +476,12 @@ services:
       REDIS_PORT: 6379
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     depends_on:
       - procurement-postgres
       - kafka
       - redis
+      - keycloak
     ports:
       - "8083:8083"
 
@@ -453,10 +501,12 @@ services:
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
       INVENTORY_BASE_URL: http://inventory-service:8082
       PROCUREMENT_BASE_URL: http://procurement-service:8083
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     depends_on:
       - reports-postgres
       - inventory-service
       - procurement-service
+      - keycloak
     ports:
       - "8084:8084"
 

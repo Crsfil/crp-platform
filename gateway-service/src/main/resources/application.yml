@@ -3,6 +3,8 @@ server:
 spring:
   application:
     name: gateway-service
+  main:
+    web-application-type: reactive
   cloud:
     gateway:
       routes:
@@ -51,8 +53,26 @@ spring:
         - id: bpm
           uri: http://bpm-service:8095
           predicates: [ Path=/bpm/** ]
+        - id: oidc
+          uri: http://keycloak:8080
+          predicates: [ Path=/oidc/** ]
+          filters:
+            - StripPrefix=1
 management:
   endpoints:
     web:
       exposure:
         include: health,info,prometheus
+
+bff:
+  issuer: ${BFF_ISSUER:http://keycloak:8080/realms/crp}
+  client-id: ${BFF_CLIENT_ID:crp-cli}
+  cookie:
+    secure: ${BFF_COOKIE_SECURE:false}
+    same-site: ${BFF_COOKIE_SAMESITE:Lax}
+
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}

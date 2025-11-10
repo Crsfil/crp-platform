@@ -1,0 +1,107 @@
+{
+  "realm": "crp",
+  "enabled": true,
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "rememberMe": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "sslRequired": "external",
+  "revokeRefreshToken": true,
+  "refreshTokenMaxReuse": 0,
+  "accessTokenLifespan": 900,
+  "refreshTokenLifespan": 3600,
+  "ssoSessionIdleTimeout": 3600,
+  "ssoSessionMaxLifespan": 28800,
+  "roles": {
+    "realm": [
+      { "name": "ADMIN" },
+      { "name": "MANAGER" },
+      { "name": "ANALYST" },
+      { "name": "USER" }
+    ]
+  },
+  "users": [
+    {
+      "username": "admin@crp.local",
+      "email": "admin@crp.local",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [ { "type": "password", "value": "admin", "temporary": false } ],
+      "realmRoles": [ "ADMIN", "MANAGER", "ANALYST", "USER" ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "crp-cli",
+      "name": "CRP CLI",
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "redirectUris": ["http://localhost:8080/auth/callback"],
+      "webOrigins": ["+"],
+      "serviceAccountsEnabled": false,
+      "attributes": { "pkce.code.challenge.method": "S256" },
+      "defaultClientScopes": [ "roles", "profile", "email" ],
+      "optionalClientScopes": [ "address", "phone" ],
+      "protocolMappers": [
+        {
+          "name": "realm-roles-to-roles-claim",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "roles",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "realm-roles-to-authorities-claim",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "authorities",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "inventory-service",
+      "name": "inventory-service",
+      "protocol": "openid-connect",
+      "bearerOnly": true
+    },
+    {
+      "clientId": "reports-service",
+      "name": "reports-service",
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "secret": "reports-secret",
+      "protocolMappers": [
+        {
+          "name": "audience-inventory",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "inventory-service",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ]
+}
