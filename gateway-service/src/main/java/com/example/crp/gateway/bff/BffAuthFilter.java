@@ -55,11 +55,12 @@ public class BffAuthFilter implements GlobalFilter, Ordered {
                 mutated.getResponse().addCookie(b.build());
             }
         }
-        return chain.filter(mutated).then(Mono.defer(() -> {
-            if (mutated.getResponse().getStatusCode() == HttpStatus.UNAUTHORIZED) {
+        ServerWebExchange exToUse = mutated;
+        return chain.filter(exToUse).then(Mono.defer(() -> {
+            if (exToUse.getResponse().getStatusCode() == HttpStatus.UNAUTHORIZED) {
                 // best-effort: clear access cache; next request will refresh
                 ResponseCookie clear = ResponseCookie.from(COOKIE_REFRESH, "").httpOnly(true).path("/").maxAge(Duration.ZERO).build();
-                mutated.getResponse().addCookie(clear);
+                exToUse.getResponse().addCookie(clear);
             }
             return Mono.empty();
         }));

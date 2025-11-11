@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.*;
@@ -25,7 +26,7 @@ public class JwtAudienceAutoConfiguration {
     @ConditionalOnProperty(name = "spring.security.oauth2.resourceserver.jwt.issuer-uri")
     @org.springframework.context.annotation.Primary
     public JwtDecoder jwtDecoder(Environment env, CrpSecurityProperties props,
-                                 ObjectProvider<JwtClaimSetConverter> claimSetConverterProvider) {
+                                 ObjectProvider<Converter<java.util.Map<String,Object>, java.util.Map<String,Object>>> claimSetConverterProvider) {
         String issuer = env.getProperty("spring.security.oauth2.resourceserver.jwt.issuer-uri");
         JwtDecoder decoder = JwtDecoders.fromIssuerLocation(issuer);
 
@@ -43,7 +44,7 @@ public class JwtAudienceAutoConfiguration {
 
         ((NimbusJwtDecoder) decoder).setJwtValidator(new DelegatingOAuth2TokenValidator<>(validators));
 
-        JwtClaimSetConverter converter = claimSetConverterProvider.getIfAvailable();
+        var converter = claimSetConverterProvider.getIfAvailable();
         if (converter != null && decoder instanceof NimbusJwtDecoder nimbus) {
             nimbus.setClaimSetConverter(converter);
         }

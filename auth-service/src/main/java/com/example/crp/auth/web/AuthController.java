@@ -76,7 +76,7 @@ public class AuthController {
         String refresh = body.get("refreshToken");
         if (refresh != null) {
             try {
-                var claims = Jwts.parserBuilder().setSigningKey((SecretKey) jwtService.getKey()).build().parseClaimsJws(refresh).getBody();
+                var claims = io.jsonwebtoken.Jwts.parserBuilder().setSigningKey(keys.getPublicKey()).build().parseClaimsJws(refresh).getBody();
                 String tid = (String) claims.get("tid");
                 tokenStore.revokeRefresh(tid);
             } catch (Exception ignored) { }

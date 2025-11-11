@@ -9,17 +9,18 @@
 - Конфигурация:
   - `gateway-service/src/main/resources/application.yml`: `spring.data.redis.host/port`.
   - `docker-compose.yml`: переменные `REDIS_HOST/REDIS_PORT` для `gateway-service`.
-- Эндпоинт BFF: `POST /bff/refresh` — читает httpOnly cookie (по умолчанию `CRP_RT`), делает refresh c координацией в Redis и:
+- Эндпоинт BFF: `POST /bff/refresh` — читает httpOnly cookie (по умолчанию `refresh_token`), делает refresh c координацией в Redis и:
   - возвращает JSON `{ "access_token": "...", "expires_in": 900 }`;
   - заменяет refresh‑cookie на новый (httpOnly, `secure`/`SameSite` из `bff.cookie.*`).
 - Входные параметры:
-  - cookie `CRP_RT` (имя можно изменить `BFF_COOKIE_NAME`).
+  - cookie `refresh_token` (имя можно изменить `BFF_COOKIE_NAME`).
 
 ### Авто‑refresh на шлюзе при истекающем AT
-- Глобальный фильтр `PreemptiveRefreshFilter`:
-  - перехватывает все запросы, кроме `/bff/**`, `/auth/**`, `/oidc/**`, `swagger/actuator`;
-  - если в `Authorization: Bearer` токен истекает в ближайшие 30 с (по `exp`), выполняет refresh (single‑flight) и повторяет запрос с новым AT;
-  - обновляет refresh‑cookie в ответе.
+- Фильтры gateway:
+  - `com.example.crp.gateway.bff.BffAuthFilter` — прокидывание/ротация токенов на основе refresh‑cookie.
+  - `com.example.crp.gateway.bff.PreemptiveRefreshFilter` — превентивный refresh при скором истечении AT; исключает `/bff/**`, `/auth/**`, `/oidc/**`, swagger/actuator.
+  - Координация: `com.example.crp.gateway.refresh.SingleFlightRefreshManager`.
+  - При успешном refresh обновляется refresh‑cookie и подменяется `Authorization` на новый AT.
 
 ## Ротация refresh‑токена/сессий в Keycloak
 - Включено в экспорт Realm: `keycloak/realm-export/crp-realm.json`.

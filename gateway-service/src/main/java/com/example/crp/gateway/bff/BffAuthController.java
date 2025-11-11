@@ -39,11 +39,11 @@ public class BffAuthController {
     }
 
     @PostMapping("/refresh")
-    public Mono<ResponseEntity<?>> refresh(ServerWebExchange exchange) {
+    public Mono<ResponseEntity<java.util.Map<String,Object>>> refresh(ServerWebExchange exchange) {
         String cookieName = props.getCookie().getName();
         var tokenCookie = exchange.getRequest().getCookies().getFirst(cookieName);
         if (tokenCookie == null || tokenCookie.getValue() == null || tokenCookie.getValue().isBlank()) {
-            return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("missing refresh cookie"));
+            return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(java.util.Map.of("error","missing refresh cookie")));
         }
         String refreshToken = tokenCookie.getValue();
         String sessionId = sha256(refreshToken);
@@ -53,11 +53,14 @@ public class BffAuthController {
                 .flatMap(tp -> setRefreshCookie(exchange, tp.refreshToken())
                         .then(Mono.fromCallable(() -> {
                             meterRegistry.counter("bff.refresh.endpoint", Tags.of("event","success")).increment();
-                            return ResponseEntity.ok(new AccessTokenResponse(tp.accessToken(), 900));
+                            java.util.Map<String,Object> resp = new java.util.LinkedHashMap<>();
+                            resp.put("access_token", tp.accessToken());
+                            resp.put("expires_in", 900);
+                            return ResponseEntity.ok(resp);
                         })))
                 .onErrorResume(e -> {
                     meterRegistry.counter("bff.refresh.endpoint", Tags.of("event","error")).increment();
-                    return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("refresh failed"));
+                    return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(java.util.Map.of("error","refresh failed")));
                 });
     }
 
@@ -85,9 +88,5 @@ public class BffAuthController {
         }
     }
 
-    static class AccessTokenResponse {
-        @JsonProperty("access_token") final String accessToken;
-        @JsonProperty("expires_in") final int expiresIn;
-        AccessTokenResponse(String accessToken, int expiresIn) { this.accessToken = accessToken; this.expiresIn = expiresIn; }
-    }
+    // unified map response is used instead of a DTO for simplicity
 }

@@ -29,9 +29,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(a -> a
                         .requestMatchers("/actuator/**","/v3/api-docs/**","/swagger-ui.html","/swagger-ui/**").permitAll()
                         .anyRequest().authenticated())
-                ;
-        InternalApiKeyFilter f = internal.getIfAvailable(); if (f != null) { http.addFilterBefore(f, UsernamePasswordAuthenticationFilter.class); }
                 .oauth2ResourceServer(o -> o.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter())));
+        InternalApiKeyFilter f = internal.getIfAvailable();
+        if (f != null) {
+            http.addFilterBefore(f, UsernamePasswordAuthenticationFilter.class);
+        }
         return http.build();
     }
 

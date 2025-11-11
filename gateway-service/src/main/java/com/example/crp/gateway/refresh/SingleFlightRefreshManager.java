@@ -91,9 +91,14 @@ public class SingleFlightRefreshManager {
 
     private Mono<Boolean> safelyUnlock(String key, String expectedVal) {
         String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
-        return redis.execute(connection -> connection.scriptingCommands().eval(
-                        script.getBytes(), ReturnType.BOOLEAN, 1, key.getBytes(), expectedVal.getBytes()))
-                .single(false);
+        java.nio.ByteBuffer scr = java.nio.ByteBuffer.wrap(script.getBytes());
+        java.nio.ByteBuffer k = java.nio.ByteBuffer.wrap(key.getBytes());
+        java.nio.ByteBuffer v = java.nio.ByteBuffer.wrap(expectedVal.getBytes());
+        return redis.execute(connection -> connection.scriptingCommands()
+                        .eval(scr, ReturnType.BOOLEAN, 1, k, v))
+                .next()
+                .map(b -> (Boolean) b)
+                .defaultIfEmpty(false);
     }
 
     private String toJson(TokenPair tp) {

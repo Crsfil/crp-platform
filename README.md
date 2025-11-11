@@ -1,63 +1,75 @@
-CRP Platform 
+CRP Platform
 
 Сервисы:
-- auth-service — аутентификация и роли (каркас)
+- auth-service — аутентификация и роли
 - inventory-service — учет техники
 - procurement-service — заявки на закупку
-- reports-service — задания на отчеты (каркас)
- - customer-service — контрагенты
- - kyc-service — проверка клиента (заглушка)
- - underwriting-service — скоринг (заглушка)
- - product-pricing-service — калькулятор графика
- - application-service — заявки с оркестрацией KYC/UW/Pricing
- - agreement-service — договоры (подписание)
- - schedule-service — хранение графиков платежей
- - billing-service — инвойсинг, авто-начисления из графика
- - payments-service — вебхук платежей, идемпотентность (Redis) + Kafka
- - accounting-service — простая бухгалтерия (проводки по инвойсам/платежам)
- - gateway-service — API шлюз (единая точка входа)
- - bpm-service — BPMN процесс заявки (Flowable)
+- reports-service — задания на отчеты
+- customer-service — контрагенты
+- kyc-service — проверка клиента (заглушка)
+- underwriting-service — скоринг (заглушка)
+- product-pricing-service — калькулятор графика
+- application-service — заявки с оркестрацией KYC/UW/Pricing
+- agreement-service — договоры (подписание)
+- schedule-service — хранение графиков платежей
+- billing-service — инвойсинг, авто-начисления из графика
+- payments-service — вебхук платежей, идемпотентность (Redis) + Kafka
+- accounting-service — простая бухгалтерия (проводки по инвойсам/платежам)
+- gateway-service — API шлюз (единая точка входа, BFF)
+- bpm-service — BPMN процесс заявки (Flowable)
 
 Стек: Java 17, Spring Boot 3, Spring Security, JPA/Hibernate, Liquibase, PostgreSQL (на каждый сервис своя БД), Kafka, Redis, Actuator/Prometheus, OpenAPI.
 
-Локальная инфраструктура (docker-compose): Kafka+Zookeeper, Redis, 4 Postgres.
-Kubernetes-манифесты в каталоге `k8s/` (images и БД/брокеры укажи под свою инсталляцию).
+Локальная инфраструктура (docker-compose): Keycloak, Kafka/Zookeeper, Redis, Postgres для сервисов, Prometheus/Grafana/Loki/Promtail. Kubernetes-манифесты в каталоге `k8s/` (адаптируйте `image` и хосты под кластер).
 
-Быстрый старт (Docker, вариант A — Keycloak + RS256):
-- Один шаг: `docker compose up -d --build` (в каталоге `crp-platform/`)
-- Поднимутся: Keycloak (порт 18080), Kafka+ZK, Redis, Postgres’ы и все сервисы.
-- В Keycloak импортируется realm `crp` с пользователем `admin@crp.local` / `admin`, ролями `ADMIN/MANAGER/ANALYST/USER`, клиентом `crp-cli`.
+Быстрый старт (Docker, Keycloak + RS256):
+- Запуск: `docker compose up -d --build` (в каталоге проекта)
+- Поднимутся: Keycloak (порт 18080), Kafka+ZK, Redis, Postgres и все сервисы.
+- Keycloak автоматически импортирует realm `crp` (пользователь `admin@crp.local`/`admin`, роли `ADMIN/MANAGER/ANALYST/USER`, клиент `crp-cli`).
 
-Контуры по умолчанию:
+Контуры по умолчанию (основные):
+- gateway: http://localhost:8080
 - auth: http://localhost:8081 (Swagger UI: /swagger-ui/index.html)
 - inventory: http://localhost:8082
 - procurement: http://localhost:8083
 - reports: http://localhost:8084
+- customer: http://localhost:8085
+- kyc: http://localhost:8086
+- underwriting: http://localhost:8087
+- product-pricing: http://localhost:8088
+- application: http://localhost:8089
+- agreement: http://localhost:8090
+- billing: http://localhost:8091
+- payments: http://localhost:8092
+- schedule: http://localhost:8093
+- edocs: http://localhost:8094
+- bpm: http://localhost:8095
 
-Конфигурация окружения (env):
-- `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` — для каждого сервиса свои (см. `application.yml`).
-- `KAFKA_BOOTSTRAP` — по умолчанию `kafka:9092` (внутри docker сети) или `localhost:9093` для хоста.
-- `REDIS_HOST`/`REDIS_PORT` — по умолчанию `redis:6379`.
-- JWT: `SECURITY_JWT_SECRET` (base64-256bit, общий для всех сервисов), `SECURITY_JWT_ACCESS_TTL_S`, `SECURITY_JWT_REFRESH_TTL_S`
-- Внутренние вызовы: `INTERNAL_API_KEY` (одинаковый во всех сервисах), чтобы `reports-service` ходил к `inventory/procurement`
+Конфигурация окружения (ключевое):
+- JWT ресурсы: `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI` указывает на Issuer Keycloak (`http://keycloak:8080/realms/crp`). Симметричный `SECURITY_JWT_SECRET` не используется ресурс‑сервисами.
+- BFF (gateway): `BFF_ISSUER`, `BFF_CLIENT_ID`, опционально `BFF_COOKIE_NAME` (по умолчанию `refresh_token`), `BFF_COOKIE_SAME_SITE`, `BFF_COOKIE_SECURE`, `BFF_COOKIE_DOMAIN`.
+- Service‑to‑Service: `OIDC_ISSUER`, `S2S_CLIENT_ID`, `S2S_CLIENT_SECRET` — для сервисов, которые дергают другие по client‑credentials (см. модуль `service-auth-client`).
+- Kafka/Redis: `KAFKA_BOOTSTRAP` (по умолчанию `kafka:9092`), `REDIS_HOST`/`REDIS_PORT` (по умолчанию `redis:6379`).
+- Базы данных: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` — для каждого сервиса свои (см. `src/main/resources/application.yml`).
+- Внутренние вызовы: опциональный `INTERNAL_API_KEY` включается в некоторых сервисах для простых внутренних сценариев (замещается S2S OAuth).
 
-Docker образы сервисов (локальная сборка):
-- Пример для inventory: `docker build -t inventory-service:local ./inventory-service`
-- Запуск в docker-compose можно добавить отдельно (сейчас compose — только инфраструктура).
+Сборка образов:
+- `docker compose build` (Dockerfile каждого сервиса сам собирает нужный модуль Maven).
 
 Kubernetes:
 - Применить неймспейс: `kubectl apply -f k8s/namespace.yaml`
 - Для сервисов: отредактируй `image` и `DB_URL`/Kafka/Redis хосты под свой кластер и применяй `kubectl apply -f k8s/<service>/deployment.yaml`.
 
-Получение токена (Keycloak):
-- Вариант 1 (BFF, браузер): открой `http://localhost:8080/auth/login` — пройдёт авторизация через Keycloak, `refresh_token` сохранится в httpOnly cookie, шлюз сам будет прокидывать `Authorization` в микросервисы.
-- Вариант 2 (CLI/dev): Direct Access Grants — `curl -s -X POST http://localhost:18080/realms/crp/protocol/openid-connect/token -H "Content-Type: application/x-www-form-urlencoded" -d "client_id=crp-cli" -d "grant_type=password" -d "username=admin@crp.local" -d "password=admin" | jq -r .access_token`
+Аутентификация и токены (Keycloak):
+- Браузерный вход через BFF: `http://localhost:8080/auth/login` — авторизация в Keycloak, `refresh_token` сохраняется в httpOnly cookie, шлюз автоматически подставляет `Authorization: Bearer ...` в запросы к микросервисам.
+- Обновление AT: шлюз делает refresh по cookie автоматически; вручную — `POST /bff/refresh` (JSON `{access_token, expires_in}`) — полезно для SPA.
+- CLI/dev: Direct Access Grants — `curl -s -X POST http://localhost:18080/realms/crp/protocol/openid-connect/token -H "Content-Type: application/x-www-form-urlencoded" -d "client_id=crp-cli" -d "grant_type=password" -d "username=admin@crp.local" -d "password=admin" | jq -r .access_token`
 - JWKS: `http://localhost:18080/realms/crp/protocol/openid-connect/certs`
 
 Что дальше (усиление безопасности): см. `docs/security-hardening.md`. Включает:
-- single-flight refresh в gateway (Redis-локи),
+- single‑flight refresh в gateway (Redis‑локи),
 - ротацию refresh в Keycloak (revoke + max reuse = 0),
-- требование `aud` во всех ресурс-сервисах и переход на service-to-service JWT вместо `X-Internal-API-Key`.
+- требование `aud` во всех ресурс‑сервисах и переход на service‑to‑service JWT вместо `X-Internal-API-Key`.
 
 Проверка сценария (curl):
 1) Получи `AT=$(...)` как выше

@@ -53,6 +53,17 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!-- Internal modules BOM: allow omitting versions in submodules -->
+            <dependency>
+                <groupId>com.example.crp</groupId>
+                <artifactId>common-security</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.crp</groupId>
+                <artifactId>service-auth-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
