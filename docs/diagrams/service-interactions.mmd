@@ -1,0 +1,44 @@
+%% Service-to-Service interactions (generated Nov 10, 2025)
+%% Derived from *-service/src/main/resources/application.yml base-url settings
+flowchart LR
+  subgraph Resource Services
+    APP[application-service]
+    BPM[bpm-service]
+    BILL[billing-service]
+    SCHED[schedule-service]
+    REP[reports-service]
+    INV[inventory-service]
+    PROC[procurement-service]
+    KYC[kyc-service]
+    UW[underwriting-service]
+    PRC[product-pricing-service]
+  end
+
+  %% application-service calls
+  APP -->|client-credentials JWT| KYC
+  APP -->|client-credentials JWT| UW
+  APP -->|client-credentials JWT| PRC
+
+  %% bpm-service calls
+  BPM -->|client-credentials JWT| KYC
+  BPM -->|client-credentials JWT| UW
+  BPM -->|client-credentials JWT| PRC
+
+  %% reports-service calls
+  REP -->|client-credentials JWT| INV
+  REP -->|client-credentials JWT| PROC
+
+  %% billing-service calls
+  BILL -->|client-credentials JWT| SCHED
+
+  %% schedule-service calls
+  SCHED -->|client-credentials JWT| PRC
+
+  classDef svc fill:#eef,stroke:#88a,stroke-width:1px;
+  class APP,BPM,BILL,SCHED,REP,INV,PROC,KYC,UW,PRC svc;
+
+  %% Notes:
+  %% - Callers use service-auth-client (ClientCredentialsTokenManager + BearerExchangeFilter).
+  %% - Resource services enforce aud via common-security (audience == spring.application.name by default).
+  %% - Keycloak realm export defines audience mappers for each caller->target pair.
+

@@ -23,27 +23,37 @@ public class BffAuthFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, org.springframework.cloud.gateway.filter.GatewayFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
-        if (path.startsWith("/auth/") || path.startsWith("/oidc/") || path.startsWith("/v3/api-docs") || path.startsWith("/swagger-ui")) {
+        if (path.startsWith("/auth/") || path.startsWith("/oidc/") || path.startsWith("/v3/api-docs") || path.startsWith("/swagger-ui") || path.equals("/actuator/health")) {
             return chain.filter(exchange);
         }
+        String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         String refresh = exchange.getRequest().getCookies().getFirst(COOKIE_REFRESH) != null ? exchange.getRequest().getCookies().getFirst(COOKIE_REFRESH).getValue() : null;
-        if (refresh == null || refresh.isBlank()) {
-            return chain.filter(exchange);
+        if ((refresh == null || refresh.isBlank()) && (authHeader == null || authHeader.isBlank())) {
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
         }
         TokenService.MonoAccess acc;
-        try {
-            acc = tokenService.ensureAccess(refresh, props.getProactiveRefreshSkewSeconds());
-        } catch (Exception ex) {
-            return chain.filter(exchange);
-        }
-        var mutated = exchange.mutate().request(r -> r.headers(h -> h.set(HttpHeaders.AUTHORIZATION, "Bearer "+acc.accessToken()))).build();
-        if (acc.rotatedRefresh()) {
-            ResponseCookie.ResponseCookieBuilder b = ResponseCookie.from(COOKIE_REFRESH, acc.refreshToken()).httpOnly(true).path("/");
-            if (props.getCookie().getDomain() != null) b.domain(props.getCookie().getDomain());
-            if (props.getCookie().isSecure()) b.secure(true);
-            String ss = props.getCookie().getSameSite(); if (ss != null) b.sameSite(ss);
-            b.maxAge(Duration.ofDays(30));
-            mutated.getResponse().addCookie(b.build());
+        ServerWebExchange mutated = exchange;
+        if (refresh != null && !refresh.isBlank()) {
+            try {
+                acc = tokenService.ensureAccess(refresh, props.getProactiveRefreshSkewSeconds());
+            } catch (Exception ex) {
+                // if refresh flow failed but Authorization header was present, proceed; otherwise 401
+                if (authHeader == null || authHeader.isBlank()) {
+                    exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                    return exchange.getResponse().setComplete();
+                }
+                return chain.filter(exchange);
+            }
+            mutated = exchange.mutate().request(r -> r.headers(h -> h.set(HttpHeaders.AUTHORIZATION, "Bearer "+acc.accessToken()))).build();
+            if (acc.rotatedRefresh()) {
+                ResponseCookie.ResponseCookieBuilder b = ResponseCookie.from(COOKIE_REFRESH, acc.refreshToken()).httpOnly(true).path("/");
+                if (props.getCookie().getDomain() != null) b.domain(props.getCookie().getDomain());
+                if (props.getCookie().isSecure()) b.secure(true);
+                String ss = props.getCookie().getSameSite(); if (ss != null) b.sameSite(ss);
+                b.maxAge(Duration.ofDays(30));
+                mutated.getResponse().addCookie(b.build());
+            }
         }
         return chain.filter(mutated).then(Mono.defer(() -> {
             if (mutated.getResponse().getStatusCode() == HttpStatus.UNAUTHORIZED) {
@@ -57,4 +67,3 @@ public class BffAuthFilter implements GlobalFilter, Ordered {
 
     @Override public int getOrder() { return -100; }
 }
-

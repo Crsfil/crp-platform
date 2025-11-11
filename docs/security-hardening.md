@@ -68,3 +68,14 @@
 - `gateway.refresh.preemptive` (tag `event`): `triggered`, `success`, `error` — проактивный refresh по `exp`.
 - `gateway.refresh.retry401` (tag `event`): `triggered`, `success`, `error` — повтор после 401.
 - `bff.refresh.endpoint` (tag `event`): `attempt`, `success`, `error` — ручной `/bff/refresh`.
+
+## Добавление новых s2s связей (аудитория)
+- Цель: чтобы целевой ресурс‑сервис принимал JWT с `aud` равным его `spring.application.name`.
+- Шаги в Keycloak (realm `crp`):
+  - Создать/использовать confidential‑клиент вызывающей стороны (`<caller>-caller`) с `Service Accounts Enabled` и секретом.
+  - Убедиться, что целевой сервис существует как bearer‑only клиент (`<target-service>`).
+  - В `Protocol Mappers` вызывающего клиента добавить `Audience`‑маппер:
+    - `included.client.audience = <target-service>`
+    - `access.token.claim = true`, `id.token.claim = false`.
+- В вызывающем сервисе настроить `service-auth-client` (`issuer`, `clientId`, `clientSecret`).
+- Проверка: запрос с полученным client‑credentials токеном к целевому сервису проходит; при удалении маппера целевой сервис отвечает 401/invalid_token (aud).

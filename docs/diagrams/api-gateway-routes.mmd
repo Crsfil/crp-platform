@@ -1,0 +1,32 @@
+%% API Gateway routes (generated Nov 10, 2025)
+flowchart LR
+  subgraph Client
+    U[User/BFF Client]
+  end
+
+  U --> G[API Gateway]
+
+  G -- "/auth/**" --> AUTH[auth-service:8081]
+  G -- "/inventory/**, /equipment/**" --> INV[inventory-service:8082]
+  G -- "/requests/**" --> PROC[procurement-service:8083]
+  G -- "/reports/**" --> REP[reports-service:8084]
+  G -- "/customers/**" --> CUST[customer-service:8085]
+  G -- "/kyc/**" --> KYC[kyc-service:8086]
+  G -- "/underwriting/**" --> UW[underwriting-service:8087]
+  G -- "/pricing/**" --> PRC[product-pricing-service:8088]
+  G -- "/applications/**" --> APP[application-service:8089]
+  G -- "/agreements/**" --> AGR[agreement-service:8090]
+  G -- "/billing/**" --> BILL[billing-service:8091]
+  G -- "/payments/**" --> PAY[payments-service:8092]
+  G -- "/schedule/**" --> SCHED[schedule-service:8093]
+  G -- "/edocs/**" --> EDOC[edocs-service:8094]
+  G -- "/bpm/**" --> BPM[bpm-service:8095]
+  G -- "/oidc/** (StripPrefix=1)" --> KC[keycloak:8080]
+
+  classDef svc fill:#eef,stroke:#88a,stroke-width:1px;
+  class AUTH,INV,PROC,REP,CUST,KYC,UW,PRC,APP,AGR,BILL,PAY,SCHED,EDOC,BPM,KC svc;
+
+  %% Notes:
+  %% - Gateway security config currently permitAll; auth is enforced by downstream resource services.
+  %% - BFF filters attach Authorization from refresh-cookie when available.
+
