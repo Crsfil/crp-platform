@@ -1,6 +1,7 @@
 # Аудит безопасности и аудитории (Nov 10, 2025)
 
 ## Сводка
+- auth-service: DEPRECATED; сервис выключен из docker-compose, основной IdP — Keycloak.
 - Маршруты gateway вынесены в профиль по умолчанию (gateway-service/src/main/resources/application-default.yml); отдельный маршрут /oidc/** на Keycloak. Диаграмма: docs/diagrams/api-gateway-routes.mmd.
 - В ресурс‑сервисах включена проверка `aud` через модуль `common-security`; ожидаемая аудитория по умолчанию равна `spring.application.name` и везде `enforce-audience: true`.
 - `issuer-uri` для resource server передаётся через env в `docker-compose.yml` для всех сервисов (Keycloak realm `crp`).
@@ -30,6 +31,7 @@
 2) Удалить неиспользуемые `security.jwt.secret` из `application-default.yml` ресурс‑сервисов.
 3) Контроль дрейфа realm: при добавлении новых s2s связей добавлять audience‑мапперы в Keycloak, чтобы `aud` совпадал с целевым `spring.application.name`.
 4) Метрики BFF refresh — следить за `gateway.refresh.*` и ошибками refresh (см. `docs/security-hardening.md`).
+
 
 
 

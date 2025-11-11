@@ -1,7 +1,7 @@
 CRP Platform
 
 Сервисы:
-- auth-service — аутентификация и роли
+- auth-service — DEPRECATED (ранний эмиттер JWT; основной IdP — Keycloak)
 - inventory-service — учет техники
 - procurement-service — заявки на закупку
 - reports-service — задания на отчеты
@@ -29,7 +29,6 @@ CRP Platform
 
 Контуры по умолчанию (основные):
 - gateway: http://localhost:8080
-- auth: http://localhost:8081 (Swagger UI: /swagger-ui/index.html)
 - inventory: http://localhost:8082
 - procurement: http://localhost:8083
 - reports: http://localhost:8084
@@ -51,7 +50,7 @@ CRP Platform
 - Service‑to‑Service: `OIDC_ISSUER`, `S2S_CLIENT_ID`, `S2S_CLIENT_SECRET` — для сервисов, которые дергают другие по client‑credentials (см. модуль `service-auth-client`).
 - Kafka/Redis: `KAFKA_BOOTSTRAP` (по умолчанию `kafka:9092`), `REDIS_HOST`/`REDIS_PORT` (по умолчанию `redis:6379`).
 - Базы данных: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` — для каждого сервиса свои (см. `src/main/resources/application.yml`).
-- Внутренние вызовы: опциональный `INTERNAL_API_KEY` включается в некоторых сервисах для простых внутренних сценариев (замещается S2S OAuth).
+- Внутренние вызовы: механизм X-Internal-API-Key DEPRECATED и отключён по умолчанию; удалён из docker-compose. Для отладки можно включить `security.internal-api-key.enabled=true` и задать ключ `security.internal-api-key=...`, но рекомендуется S2S OAuth (client_credentials).
 
 Сборка образов:
 - `docker compose build` (Dockerfile каждого сервиса сам собирает нужный модуль Maven).
@@ -65,6 +64,17 @@ Kubernetes:
 - Обновление AT: шлюз делает refresh по cookie автоматически; вручную — `POST /bff/refresh` (JSON `{access_token, expires_in}`) — полезно для SPA.
 - CLI/dev: Direct Access Grants — `curl -s -X POST http://localhost:18080/realms/crp/protocol/openid-connect/token -H "Content-Type: application/x-www-form-urlencoded" -d "client_id=crp-cli" -d "grant_type=password" -d "username=admin@crp.local" -d "password=admin" | jq -r .access_token`
 - JWKS: `http://localhost:18080/realms/crp/protocol/openid-connect/certs`
+
+Deprecated/Legacy
+- auth-service отключён в docker-compose (см. закомментированный блок), Keycloak — основной IdP. Маршрут `/auth/**` в gateway закомментирован в профиле `application-default.yml`.
+- X-Internal-API-Key отключён по умолчанию. Для локальной отладки можно раскомментировать env в docker-compose и параметры в `application.yml` сервисов (с отметкой DEPRECATED), но не рекомендуется.
+
+Профили
+- В gateway маршруты вынесены в `gateway-service/src/main/resources/application-default.yml` (загружается по умолчанию Spring Boot).
+- Остальные сервисы используют `application.yml`; значения переопределяются переменными среды из docker-compose.
+
+Модель безопасности
+- Шлюз (`gateway-service`) по дизайну `permitAll` и занимается BFF/refresh/проксированием. Авторизация выполняется на уровне ресурс‑сервисов (OAuth2 Resource Server + audience check, модуль `common-security`).
 
 Что дальше (усиление безопасности): см. `docs/security-hardening.md`. Включает:
 - single‑flight refresh в gateway (Redis‑локи),
@@ -128,11 +138,17 @@ Kubernetes:
 
 Дополнительно (BPM + график + биллинг + платежи):
 - BPM (Flowable): старт процесса заявки
-  - `curl -s http://localhost:8095/bpm/process/start -H "X-Internal-API-Key: changeme" -H "Content-Type: application/json" -d '{"customerId":1,"amount":1000000,"termMonths":36,"rateAnnualPct":12}'`
+  - `curl -s http://localhost:8095/bpm/process/start -H "Authorization: Bearer $AT" -H "Content-Type: application/json" -d '{"customerId":1,"amount":1000000,"termMonths":36,"rateAnnualPct":12}'`
 - Сгенерировать график для договора:
-  - `curl -s "http://localhost:8093/schedule/generate?agreementId=1&amount=1000000&termMonths=36&rateAnnualPct=12" -H "X-Internal-API-Key: changeme"`
+  - `curl -s "http://localhost:8093/schedule/generate?agreementId=1&amount=1000000&termMonths=36&rateAnnualPct=12" -H "Authorization: Bearer $AT"`
 - Авто-начисление инвойсов:
   - биллинг раз в минуту читает `/schedule/due?date=YYYY-MM-DD` и выпускает инвойсы, помечая элементы графика как INVOICED. Подождите до минуты или временно вызовите генерацию с ближайшей датой.
 - Имитация платежа (вебхук):
   - `curl -s http://localhost:8092/payments/webhook -H "Content-Type: application/json" -d '{"eventId":"evt-1","invoiceId":1,"amount":12345.67}'`
   - сообщение попадёт в Kafka `payment.received`, биллинг отметит инвойс как PAID, бухгалтерия запишет проводки.
+
+
+
+Security note: gateway (permitAll by design), auth at resource services (OAuth2 Resource Server + audience).
+
+

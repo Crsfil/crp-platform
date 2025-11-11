@@ -36,16 +36,18 @@ services:
     ports:
       - "6379:6379"
 
-  auth-postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: authdb
-      POSTGRES_USER: auth
-      POSTGRES_PASSWORD: auth
-    ports:
-      - "5433:5432"
-    volumes:
-      - auth_pgdata:/var/lib/postgresql/data
+  # auth-postgres removed (auth-service deprecated)
+  # --- Legacy block (disabled) ---
+  # auth-postgres:
+  #   image: postgres:16-alpine
+  #   environment:
+  #     POSTGRES_DB: authdb
+  #     POSTGRES_USER: auth
+  #     POSTGRES_PASSWORD: auth
+  #   ports:
+  #     - "5433:5432"
+  #   volumes:
+  #     - auth_pgdata:/var/lib/postgresql/data
 
   inventory-postgres:
     image: postgres:16-alpine
@@ -136,7 +138,6 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
     depends_on:
-      - auth-service
       - keycloak
       - inventory-service
       - procurement-service
@@ -165,7 +166,7 @@ services:
       DB_USERNAME: customer
       DB_PASSWORD: customer
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+      # INTERNAL_API_KEY removed (disabled by default)
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     depends_on:
       - customer-postgres
@@ -180,7 +181,7 @@ services:
     environment:
       SERVER_PORT: 8086
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+      # INTERNAL_API_KEY removed (disabled by default)
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     ports:
       - "8086:8086"
@@ -194,7 +195,7 @@ services:
     environment:
       SERVER_PORT: 8087
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+      # INTERNAL_API_KEY removed (disabled by default)
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     ports:
       - "8087:8087"
@@ -208,7 +209,7 @@ services:
     environment:
       SERVER_PORT: 8088
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+      # INTERNAL_API_KEY removed (disabled by default)
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     ports:
       - "8088:8088"
@@ -251,7 +252,7 @@ services:
       DB_USERNAME: agreement
       DB_PASSWORD: agreement
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+      # INTERNAL_API_KEY removed (disabled by default)
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     depends_on:
       - agreement-postgres
@@ -413,7 +414,7 @@ services:
       DB_USERNAME: accounting
       DB_PASSWORD: accounting
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-changeme}
+      # INTERNAL_API_KEY removed (disabled by default)
       KAFKA_BOOTSTRAP: kafka:9092
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     depends_on:
@@ -423,27 +424,29 @@ services:
     ports:
       - "8096:8096"
 
-  auth-service:
-    build:
-      context: .
-      dockerfile: auth-service/Dockerfile
-    environment:
-      SERVER_PORT: 8081
-      DB_URL: jdbc:postgresql://auth-postgres:5432/authdb
-      DB_USERNAME: auth
-      DB_PASSWORD: auth
-      KAFKA_BOOTSTRAP: kafka:9092
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
-      ADMIN_EMAIL: admin@crp.local
-      ADMIN_PASSWORD: admin
-    depends_on:
-      - auth-postgres
-      - kafka
-      - redis
-    ports:
-      - "8081:8081"
+  # auth-service removed (deprecated; use Keycloak)
+  # --- Legacy block (disabled) ---
+  # auth-service:
+  #   build:
+  #     context: .
+  #     dockerfile: auth-service/Dockerfile
+  #   environment:
+  #     SERVER_PORT: 8081
+  #     DB_URL: jdbc:postgresql://auth-postgres:5432/authdb
+  #     DB_USERNAME: auth
+  #     DB_PASSWORD: auth
+  #     KAFKA_BOOTSTRAP: kafka:9092
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
+  #     SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-changeme}
+  #     ADMIN_EMAIL: admin@crp.local
+  #     ADMIN_PASSWORD: admin
+  #   depends_on:
+  #     - auth-postgres
+  #     - kafka
+  #     - redis
+  #   ports:
+  #     - "8081:8081"
 
   inventory-service:
     build:
@@ -517,7 +520,7 @@ services:
       - "8084:8084"
 
 volumes:
-  auth_pgdata:
+  # auth_pgdata volume removed
   inventory_pgdata:
   procurement_pgdata:
   reports_pgdata:

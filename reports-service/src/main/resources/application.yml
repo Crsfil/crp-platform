@@ -23,7 +23,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:${SECURITY_JWT_ISSUER:http://auth-service:8081}}
+          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:${SECURITY_JWT_ISSUER:http://keycloak:8080/realms/crp}}
 
 management:
   endpoints:
@@ -32,7 +32,10 @@ management:
         include: health,info,prometheus
 
 security:
-  internal-api-key: ${INTERNAL_API_KEY:changeme}
+  internal-api-key: ""
+  # Legacy (DEPRECATED): uncomment for local debugging only
+  # security.internal-api-key.enabled: true
+  # security.internal-api-key: changeme
 
 inventory:
   base-url: ${INVENTORY_BASE_URL:http://inventory-service:8082}

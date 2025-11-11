@@ -2,9 +2,9 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: auth
-          uri: http://auth-service:8081
-          predicates: [ Path=/auth/** ]
+        # - id: auth
+        #   uri: http://auth-service:8081
+        #   predicates: [ Path=/auth/** ]
         - id: inventory
           uri: http://inventory-service:8082
           predicates: [ Path=/inventory/**, Path=/equipment/** ]
