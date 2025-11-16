@@ -36,11 +36,10 @@ public class InventoryListeners {
 
     @KafkaListener(topics = "procurement.rejected", groupId = "inventory")
     public void onRejected(@Payload Events.ProcurementRejected msg) {
-        repo.findById(msg.equipmentId()).ifPresent(e -> {
+        repo.findById(msg.equipmentId()).ifPresentOrElse(e -> {
             e.setStatus("AVAILABLE");
             repo.save(e);
             template.send("inventory.released", new Events.InventoryReleased(msg.requestId(), msg.equipmentId()));
-        });
+        }, () -> template.send("inventory.released", new Events.InventoryReleased(msg.requestId(), msg.equipmentId())));
     }
 }
-

@@ -47,6 +47,33 @@ class InventoryListenersTest {
     }
 
     @Test
+    void onApprovedEquipmentNotFound() {
+        Events.ProcurementApproved msg = new Events.ProcurementApproved(10L, 99L, 6L);
+        when(repo.findById(99L)).thenReturn(Optional.empty());
+
+        inventoryListeners.onApproved(msg);
+
+        verify(repo, never()).save(any());
+        verify(template).send(eq("inventory.reserve_failed"), any(Events.InventoryReserveFailed.class));
+        verify(template, never()).send(eq("inventory.reserved"), any());
+    }
+
+    @Test
+    void onApprovedEquipmentNotAvailable() {
+        Events.ProcurementApproved msg = new Events.ProcurementApproved(11L, 100L, 6L);
+        Equipment equipment = new Equipment();
+        equipment.setStatus("RESERVED");
+        when(repo.findById(100L)).thenReturn(Optional.of(equipment));
+
+        inventoryListeners.onApproved(msg);
+
+        verify(repo, never()).save(any());
+        verify(template).send(eq("inventory.reserve_failed"), any(Events.InventoryReserveFailed.class));
+        verify(template, never()).send(eq("inventory.reserved"), any());
+
+    }
+
+    @Test
     void onRejected() {
         Events.ProcurementRejected msg = new Events.ProcurementRejected(2L, 5L, 7L);
         Equipment equipmentToFind = new Equipment();

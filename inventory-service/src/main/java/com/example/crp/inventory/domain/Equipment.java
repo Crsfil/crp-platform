@@ -1,7 +1,6 @@
 package com.example.crp.inventory.domain;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -14,7 +13,6 @@ public class Equipment {
     private Long id;
     private String type;
     private String model;
-    @NotBlank
     private String status;
     private BigDecimal price;
     private OffsetDateTime createdAt;
@@ -31,5 +29,11 @@ public class Equipment {
     public void setPrice(java.math.BigDecimal price) { this.price = price; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
-}
 
+    @PrePersist
+    public void prePersist() {
+        if (this.createdAt == null) {
+            this.createdAt = OffsetDateTime.now();
+        }
+    }
+}

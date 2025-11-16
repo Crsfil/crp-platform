@@ -1,0 +1,12 @@
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9093}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:http://localhost:18080/realms/crp}
+
+security:
+  jwt:
+    issuer: ${SECURITY_JWT_ISSUER:http://localhost:18080/realms/crp}

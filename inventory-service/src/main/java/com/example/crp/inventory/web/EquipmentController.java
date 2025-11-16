@@ -24,7 +24,9 @@ public class EquipmentController {
     @PostMapping
     @PreAuthorize("hasAuthority('INVENTORY_WRITE') or hasRole('ADMIN')")
     public org.springframework.http.ResponseEntity<Equipment> create(@Valid @RequestBody Equipment e) {
-        if (e.getStatus() != null && e.getStatus().trim().isEmpty()) {
+        if (e.getStatus() == null) {
+            e.setStatus("AVAILABLE");
+        } else if (e.getStatus().trim().isEmpty()) {
             return org.springframework.http.ResponseEntity.badRequest().build();
         }
         Equipment saved = repository.save(e);
@@ -33,7 +35,8 @@ public class EquipmentController {
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAuthority('INVENTORY_WRITE') or hasRole('ADMIN')")
-    public ResponseEntity<Equipment> updateStatus(@PathVariable Long id, @RequestParam String status) {
+    public ResponseEntity<Equipment> updateStatus(@PathVariable("id") Long id,
+                                                  @RequestParam("status") String status) {
         return repository.findById(id)
                 .map(e -> { e.setStatus(status); return ResponseEntity.ok(repository.save(e)); })
                 .orElse(ResponseEntity.notFound().build());
