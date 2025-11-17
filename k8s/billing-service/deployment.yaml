@@ -33,8 +33,6 @@ spec:
               valueFrom: { secretKeyRef: { name: billing-db, key: password } }
             - { name: KAFKA_BOOTSTRAP, value: kafka:9092 }
             - { name: SCHEDULE_BASE_URL, value: http://schedule-service:8093 }
-            - name: SECURITY_JWT_SECRET
-              valueFrom: { secretKeyRef: { name: crp-shared, key: jwt-secret } }
             - name: INTERNAL_API_KEY
               valueFrom: { secretKeyRef: { name: crp-shared, key: internal-api-key } }
 ---

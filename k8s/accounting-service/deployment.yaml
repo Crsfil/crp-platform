@@ -32,8 +32,6 @@ spec:
             - name: DB_PASSWORD
               valueFrom: { secretKeyRef: { name: accounting-db, key: password } }
             - { name: KAFKA_BOOTSTRAP, value: kafka:9092 }
-            - name: SECURITY_JWT_SECRET
-              valueFrom: { secretKeyRef: { name: crp-shared, key: jwt-secret } }
             - name: INTERNAL_API_KEY
               valueFrom: { secretKeyRef: { name: crp-shared, key: internal-api-key } }
 ---

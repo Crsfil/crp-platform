@@ -10,7 +10,6 @@
   "revokeRefreshToken": true,
   "refreshTokenMaxReuse": 0,
   "accessTokenLifespan": 900,
-  "refreshTokenLifespan": 3600,
   "ssoSessionIdleTimeout": 3600,
   "ssoSessionMaxLifespan": 28800,
   "roles": {
@@ -153,19 +152,16 @@
         { "name": "audience-underwriting", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "underwriting-service", "id.token.claim": "false", "access.token.claim": "true"} },
         { "name": "audience-pricing", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "consentRequired": false, "config": {"included.client.audience": "product-pricing-service", "id.token.claim": "false", "access.token.claim": "true"} }
       ]
-    }
+    },
     { "clientId": "procurement-service", "name": "procurement-service", "protocol": "openid-connect", "bearerOnly": true },
     { "clientId": "customer-service", "name": "customer-service", "protocol": "openid-connect", "bearerOnly": true },
     { "clientId": "kyc-service", "name": "kyc-service", "protocol": "openid-connect", "bearerOnly": true },
     { "clientId": "underwriting-service", "name": "underwriting-service", "protocol": "openid-connect", "bearerOnly": true },
-    { "clientId": "product-pricing-service", "name": "product-pricing-service", "protocol": "openid-connect", "bearerOnly": true },
     { "clientId": "application-service", "name": "application-service", "protocol": "openid-connect", "bearerOnly": true },
     { "clientId": "agreement-service", "name": "agreement-service", "protocol": "openid-connect", "bearerOnly": true },
-    { "clientId": "schedule-service", "name": "schedule-service", "protocol": "openid-connect", "bearerOnly": true },
     { "clientId": "billing-service", "name": "billing-service", "protocol": "openid-connect", "bearerOnly": true },
     { "clientId": "payments-service", "name": "payments-service", "protocol": "openid-connect", "bearerOnly": true },
     { "clientId": "edocs-service", "name": "edocs-service", "protocol": "openid-connect", "bearerOnly": true },
-    { "clientId": "bpm-service", "name": "bpm-service", "protocol": "openid-connect", "bearerOnly": true },
     { "clientId": "accounting-service", "name": "accounting-service", "protocol": "openid-connect", "bearerOnly": true },
     {
       "clientId": "billing-service-caller",

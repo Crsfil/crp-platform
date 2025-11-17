@@ -36,6 +36,7 @@ Middle / Senior Java Developer • октябрь 2022  по н.в.
 Обязанности:
 - Проектирование и реализация микросервисов (Auth, Inventory, Procurement, Reports).
 - Разработка и внедрение единого стека аутентификации на базе OIDC (Keycloak) и JWT (RS256) для всей платформы.
+- Проектирование и внедрение RBAC‑модели (Role‑Based Access Control): роли/права, маппинг в токены (protocol mappers), применение правил в сервисах.
 - Создание общих модулей безопасности (`common-security`) и клиента для межсервисного взаимодействия (`service-auth-client`).
 - Реализация централизованного обновления токенов (BFF) с защитой от "шторма" обновлений.
 - Создание сервиса формирования отчетов (Excel, Word) с использованием Apache POI.
@@ -44,6 +45,7 @@ Middle / Senior Java Developer • октябрь 2022  по н.в.
 Достижения:
 - Разработал и вывел в продакшн 4 микросервиса (Auth/Inventory/Procurement/Reports) с интеграциями и отчётностью (Apache POI — генерация Excel/Word).
 - Спроектировал и внедрил единый стек аутентификации: OIDC (OpenID Connect) на базе Keycloak (IdP), JWT RS256 (асимметричная подпись), строгая проверка `aud` (аудитория — целевой сервис).
+- Реализовал RBAC: роли (ADMIN/MANAGER/ANALYST/USER), маппинг в claims (`roles`, `authorities`), правила доступа (@PreAuthorize, matchers). Документация: `docs/rbac.md`.
 - Создал общий модуль безопасности `common-security` (автоконфигурация `JwtDecoder`, валидация `iss`/`aud`, plug-and-play для всех сервисов).
 - Реализовал `service-auth-client` (`client-credentials` + фильтр `WebClient`) и перевёл s2s-вызовы на JWT; отказался от `X-Internal-API-Key`.
 - Включил автообновление в BFF (Backend For Frontend) и защиту от «шторма» (single-flight через Redis), добавил метрики (успех/ошибка/тайминги).

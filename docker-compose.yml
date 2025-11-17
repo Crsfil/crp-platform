@@ -165,7 +165,6 @@ services:
       DB_URL: jdbc:postgresql://customer-postgres:5432/customerdb
       DB_USERNAME: customer
       DB_PASSWORD: customer
-      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       # INTERNAL_API_KEY removed (disabled by default)
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     depends_on:
@@ -180,11 +179,8 @@ services:
       dockerfile: kyc-service/Dockerfile
     environment:
       SERVER_PORT: 8086
-      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       # INTERNAL_API_KEY removed (disabled by default)
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
-    ports:
-      - "8086:8086"
     depends_on:
       - keycloak
 
@@ -194,7 +190,6 @@ services:
       dockerfile: underwriting-service/Dockerfile
     environment:
       SERVER_PORT: 8087
-      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       # INTERNAL_API_KEY removed (disabled by default)
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     ports:
@@ -208,11 +203,8 @@ services:
       dockerfile: product-pricing-service/Dockerfile
     environment:
       SERVER_PORT: 8088
-      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       # INTERNAL_API_KEY removed (disabled by default)
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
-    ports:
-      - "8088:8088"
     depends_on:
       - keycloak
 
@@ -225,7 +217,6 @@ services:
       DB_URL: jdbc:postgresql://application-postgres:5432/applicationdb
       DB_USERNAME: app
       DB_PASSWORD: app
-      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       KYC_BASE_URL: http://kyc-service:8086
       UW_BASE_URL: http://underwriting-service:8087
       PRICING_BASE_URL: http://product-pricing-service:8088
@@ -251,7 +242,6 @@ services:
       DB_URL: jdbc:postgresql://agreement-postgres:5432/agreementdb
       DB_USERNAME: agreement
       DB_PASSWORD: agreement
-      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       # INTERNAL_API_KEY removed (disabled by default)
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     depends_on:
@@ -269,7 +259,6 @@ services:
       DB_URL: jdbc:postgresql://billing-postgres:5432/billingdb
       DB_USERNAME: billing
       DB_PASSWORD: billing
-      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       KAFKA_BOOTSTRAP: kafka:9092
       SCHEDULE_BASE_URL: http://schedule-service:8093
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
@@ -289,7 +278,6 @@ services:
       dockerfile: payments-service/Dockerfile
     environment:
       SERVER_PORT: 8092
-      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       KAFKA_BOOTSTRAP: kafka:9092
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -307,7 +295,6 @@ services:
       dockerfile: schedule-service/Dockerfile
     environment:
       SERVER_PORT: 8093
-      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       OIDC_ISSUER: http://keycloak:8080/realms/crp
       S2S_CLIENT_ID: schedule-service-caller
       S2S_CLIENT_SECRET: schedule-secret
@@ -327,10 +314,7 @@ services:
       dockerfile: edocs-service/Dockerfile
     environment:
       SERVER_PORT: 8094
-      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
-    ports:
-      - "8094:8094"
     depends_on:
       - keycloak
 
@@ -340,7 +324,6 @@ services:
       dockerfile: bpm-service/Dockerfile
     environment:
       SERVER_PORT: 8095
-      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       OIDC_ISSUER: http://keycloak:8080/realms/crp
       S2S_CLIENT_ID: bpm-service-caller
       S2S_CLIENT_SECRET: bpm-secret
@@ -413,7 +396,6 @@ services:
       DB_URL: jdbc:postgresql://accounting-postgres:5432/accountingdb
       DB_USERNAME: accounting
       DB_PASSWORD: accounting
-      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       # INTERNAL_API_KEY removed (disabled by default)
       KAFKA_BOOTSTRAP: kafka:9092
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
@@ -438,7 +420,7 @@ services:
   #     KAFKA_BOOTSTRAP: kafka:9092
   #     REDIS_HOST: redis
   #     REDIS_PORT: 6379
-  #     SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-changeme}
+  #     SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-changeme}  # legacy, no longer used
   #     ADMIN_EMAIL: admin@crp.local
   #     ADMIN_PASSWORD: admin
   #   depends_on:
@@ -460,7 +442,6 @@ services:
       KAFKA_BOOTSTRAP: kafka:9092
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     depends_on:
       - inventory-postgres
@@ -482,7 +463,6 @@ services:
       KAFKA_BOOTSTRAP: kafka:9092
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
     depends_on:
       - procurement-postgres
@@ -504,7 +484,6 @@ services:
       KAFKA_BOOTSTRAP: kafka:9092
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       INVENTORY_BASE_URL: http://inventory-service:8082
       PROCUREMENT_BASE_URL: http://procurement-service:8083
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp

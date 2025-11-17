@@ -26,8 +26,6 @@ spec:
             limits: { cpu: "500m", memory: "512Mi" }
           env:
             - { name: SERVER_PORT, value: "8094" }
-            - name: SECURITY_JWT_SECRET
-              valueFrom: { secretKeyRef: { name: crp-shared, key: jwt-secret } }
             - name: INTERNAL_API_KEY
               valueFrom: { secretKeyRef: { name: crp-shared, key: internal-api-key } }
 ---

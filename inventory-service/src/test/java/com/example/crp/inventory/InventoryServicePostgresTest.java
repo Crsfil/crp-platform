@@ -3,6 +3,7 @@ package com.example.crp.inventory;
 import com.example.crp.inventory.domain.Equipment;
 import com.example.crp.inventory.repo.EquipmentRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -19,6 +20,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import com.example.crp.inventory.config.TestcontainersDisabler;
 
 import java.util.List;
 
@@ -37,6 +40,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Testcontainers
 @ActiveProfiles("test")
+@ExtendWith(TestcontainersDisabler.class)
 @Import(com.example.crp.inventory.config.TestSecurityConfig.class)
 class InventoryServicePostgresTest {
 
@@ -46,10 +50,6 @@ class InventoryServicePostgresTest {
                     .withDatabaseName("inventorydb")
                     .withUsername("inventory")
                     .withPassword("inventory");
-
-    static {
-        postgres.start();
-    }
 
     @DynamicPropertySource
     static void overrideProps(DynamicPropertyRegistry registry) {

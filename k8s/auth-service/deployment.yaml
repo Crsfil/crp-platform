@@ -45,11 +45,6 @@ spec:
               value: redis
             - name: REDIS_PORT
               value: "6379"
-            - name: SECURITY_JWT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: crp-shared
-                  key: jwt-secret
 ---
 apiVersion: v1
 kind: Service
