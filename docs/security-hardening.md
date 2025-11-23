@@ -52,6 +52,11 @@
   3) Удалить использование `X-Internal-API-Key` и заголовок из вызовов.
   4) По завершении — удалить `INTERNAL_API_KEY` из `docker-compose.yml`.
 
+## RBAC (Role‑Based Access Control)
+- Роли и права описаны в `docs/rbac.md` (realm roles, protocol mappers, применение в сервисах).
+- В сервисах включена `@EnableMethodSecurity` и используются `JwtAuthenticationConverter` для маппинга `roles/authorities` в GrantedAuthorities.
+- Рекомендация: критичные операции закрывать через `@PreAuthorize` и/или matchers на уровне `SecurityFilterChain`.
+
 ## mTLS (опционально, в дополнение к JWT)
 - Рекомендуется для Intra‑cluster: включить взаимную аутентификацию на уровне канала.
 - Kubernetes: cert‑manager → выдать pod‑certificates; в сервисах `server.ssl.*` + `server.ssl.client-auth=need`.

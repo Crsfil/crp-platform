@@ -12,7 +12,7 @@ public class CrpSecurityProperties {
     /**
      * Enable audience enforcement. Default true.
      */
-    private boolean enforceAudience = false;
+    private boolean enforceAudience = true;
 
     public String getAudience() {
         return audience;

@@ -1,6 +1,7 @@
 package com.example.crp.inventory;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -11,6 +12,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import com.example.crp.inventory.config.TestcontainersDisabler;
+
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 @SpringBootTest(properties = {
@@ -20,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Testcontainers
 @ActiveProfiles("test")
+@ExtendWith(TestcontainersDisabler.class)
 @Import(com.example.crp.inventory.config.TestSecurityConfig.class)
 class InventoryServiceApplicationTest {
 
@@ -47,7 +51,17 @@ class InventoryServiceApplicationTest {
 
     @Test
     void mainMethodRuns() {
-        assertThatCode(() -> InventoryServiceApplication.main(new String[]{}))
+        String[] args = {
+                "--spring.profiles.active=test",
+                "--spring.datasource.url=" + postgres.getJdbcUrl(),
+                "--spring.datasource.username=" + postgres.getUsername(),
+                "--spring.datasource.password=" + postgres.getPassword(),
+                "--DB_URL=" + postgres.getJdbcUrl(),
+                "--DB_USERNAME=" + postgres.getUsername(),
+                "--DB_PASSWORD=" + postgres.getPassword()
+        };
+
+        assertThatCode(() -> InventoryServiceApplication.main(args))
                 .doesNotThrowAnyException();
     }
 }

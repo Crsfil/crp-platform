@@ -29,8 +29,6 @@ spec:
             - { name: KYC_BASE_URL, value: http://kyc-service:8086 }
             - { name: UW_BASE_URL, value: http://underwriting-service:8087 }
             - { name: PRICING_BASE_URL, value: http://product-pricing-service:8088 }
-            - name: SECURITY_JWT_SECRET
-              valueFrom: { secretKeyRef: { name: crp-shared, key: jwt-secret } }
             - name: INTERNAL_API_KEY
               valueFrom: { secretKeyRef: { name: crp-shared, key: internal-api-key } }
 ---

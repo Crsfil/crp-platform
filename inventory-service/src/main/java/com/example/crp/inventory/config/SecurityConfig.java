@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
@@ -19,6 +20,10 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/**", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
+                        // RBAC: чтение инвентаря — для аутентифицированных ролей, изменения — только для INVENTORY_WRITE или ADMIN
+                        .requestMatchers(HttpMethod.POST, "/equipment/**").hasAnyAuthority("INVENTORY_WRITE", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/equipment/**").hasAnyAuthority("INVENTORY_WRITE", "ROLE_ADMIN")
+                        .requestMatchers("/equipment/**").authenticated()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(o -> o.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter())));
         return http.build();
@@ -42,4 +47,3 @@ public class SecurityConfig {
         return conv;
     }
 }
-

@@ -1,4 +1,4 @@
-%% API Gateway routes (generated Nov 10, 2025)
+%% API Gateway routes (updated Nov 12, 2025)
 flowchart LR
   subgraph Client
     U[User/BFF Client]
@@ -6,7 +6,6 @@ flowchart LR
 
   U --> G[API Gateway]
 
-  G -- "/auth/**" --> AUTH[auth-service:8081]
   G -- "/inventory/**, /equipment/**" --> INV[inventory-service:8082]
   G -- "/requests/**" --> PROC[procurement-service:8083]
   G -- "/reports/**" --> REP[reports-service:8084]
@@ -24,9 +23,9 @@ flowchart LR
   G -- "/oidc/** (StripPrefix=1)" --> KC[keycloak:8080]
 
   classDef svc fill:#eef,stroke:#88a,stroke-width:1px;
-  class AUTH,INV,PROC,REP,CUST,KYC,UW,PRC,APP,AGR,BILL,PAY,SCHED,EDOC,BPM,KC svc;
+  class INV,PROC,REP,CUST,KYC,UW,PRC,APP,AGR,BILL,PAY,SCHED,EDOC,BPM,KC svc;
 
   %% Notes:
-  %% - Gateway security config currently permitAll; auth is enforced by downstream resource services.
-  %% - BFF filters attach Authorization from refresh-cookie when available.
-
+  %% - Auth-service route removed (Keycloak is primary IdP; /auth/** not proxied).
+  %% - Gateway security config permitAll; BFF enforces presence of Authorization or refresh cookie (non-public paths).
+  %% - Default refresh-cookie name: refresh_token.

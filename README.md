@@ -118,7 +118,7 @@ Deprecated/Legacy
 - Инвойсы: `billing-service/src/main/java/com/example/crp/billing/web/BillingController.java:1`
 - KYC/UW заглушки: `kyc-service/src/main/java/com/example/crp/kyc/web/KycController.java:1`, `underwriting-service/src/main/java/com/example/crp/underwriting/web/UnderwritingController.java:1`
 - Клиенты: `customer-service/src/main/java/com/example/crp/customer/web/CustomerController.java:1`
-- JWT/секреты: application.yml каждого сервиса (`SECURITY_JWT_SECRET`), внутренние вызовы (`INTERNAL_API_KEY`)
+- JWT/аутентификация: resource‑сервисы используют `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI` (Issuer Keycloak). `SECURITY_JWT_SECRET` — легаси и удалён из конфигураций; для машинных вызовов рекомендуется OAuth2 client_credentials вместо `INTERNAL_API_KEY`.
 
 Сборка Maven (если хочешь проверить без Docker)
 - Из корня репозитория: `mvn -q -DskipTests package`
@@ -150,5 +150,4 @@ Deprecated/Legacy
 
 
 Security note: gateway (permitAll by design), auth at resource services (OAuth2 Resource Server + audience).
-
 
