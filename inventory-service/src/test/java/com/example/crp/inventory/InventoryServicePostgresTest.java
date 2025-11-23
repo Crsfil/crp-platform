@@ -47,10 +47,6 @@ class InventoryServicePostgresTest {
                     .withUsername("inventory")
                     .withPassword("inventory");
 
-    static {
-        postgres.start();
-    }
-
     @DynamicPropertySource
     static void overrideProps(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", postgres::getJdbcUrl);

@@ -11,8 +11,9 @@ import java.util.Map;
 public class PricingTaskDelegate extends BaseRestTask implements JavaDelegate {
     public PricingTaskDelegate(org.springframework.web.reactive.function.client.WebClient kycClient,
                                org.springframework.web.reactive.function.client.WebClient underwritingClient,
-                               org.springframework.web.reactive.function.client.WebClient pricingClient) {
-        super(kycClient, underwritingClient, pricingClient);
+                               org.springframework.web.reactive.function.client.WebClient pricingClient,
+                               org.springframework.web.reactive.function.client.WebClient applicationClient) {
+        super(kycClient, underwritingClient, pricingClient, applicationClient);
     }
 
     @Override
@@ -20,6 +21,7 @@ public class PricingTaskDelegate extends BaseRestTask implements JavaDelegate {
         Double amount = (Double) execution.getVariable("amount");
         Integer term = (Integer) execution.getVariable("termMonths");
         Double rate = (Double) execution.getVariable("rateAnnualPct");
+        Long appId = (Long) execution.getVariable("applicationId");
         Map res = pricingClient.post().uri(uriBuilder -> uriBuilder
                         .path("/pricing/calc")
                         .queryParam("amount", amount)
@@ -30,5 +32,6 @@ public class PricingTaskDelegate extends BaseRestTask implements JavaDelegate {
                 .retrieve().bodyToMono(Map.class).block();
         execution.setVariable("pricing", res);
         setStatus(execution, "PRICED");
+        pushStatusToApp(appId, "PRICED");
     }
 }

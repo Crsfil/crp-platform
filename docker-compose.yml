@@ -18,7 +18,7 @@ services:
     ports:
       - "2181:2181"
 
-  kafka:
+  kafka1:
     image: confluentinc/cp-kafka:7.6.0
     depends_on:
       - zookeeper
@@ -28,8 +28,37 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:9092,PLAINTEXT_HOST://localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+  kafka2:
+    image: confluentinc/cp-kafka:7.6.0
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+  kafka3:
+    image: confluentinc/cp-kafka:7.6.0
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka3:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
 
   redis:
     image: redis:7-alpine
@@ -133,10 +162,14 @@ services:
     environment:
       SERVER_PORT: 8080
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
+      APPLICATION_BASE_URL: http://application-service:8089
       BFF_ISSUER: http://keycloak:8080/realms/crp
       BFF_CLIENT_ID: crp-cli
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
+      MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     depends_on:
       - keycloak
       - inventory-service
@@ -168,6 +201,9 @@ services:
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       # INTERNAL_API_KEY removed (disabled by default)
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
+      MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     depends_on:
       - customer-postgres
       - keycloak
@@ -183,6 +219,9 @@ services:
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       # INTERNAL_API_KEY removed (disabled by default)
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
+      MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     ports:
       - "8086:8086"
     depends_on:
@@ -197,6 +236,9 @@ services:
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       # INTERNAL_API_KEY removed (disabled by default)
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
+      MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     ports:
       - "8087:8087"
     depends_on:
@@ -211,6 +253,9 @@ services:
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       # INTERNAL_API_KEY removed (disabled by default)
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
+      MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     ports:
       - "8088:8088"
     depends_on:
@@ -233,6 +278,10 @@ services:
       OIDC_ISSUER: http://keycloak:8080/realms/crp
       S2S_CLIENT_ID: application-service-caller
       S2S_CLIENT_SECRET: application-secret
+      BPM_BASE_URL: http://bpm-service:8095
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
+      MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     depends_on:
       - application-postgres
       - kyc-service
@@ -254,6 +303,9 @@ services:
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       # INTERNAL_API_KEY removed (disabled by default)
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
+      MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     depends_on:
       - agreement-postgres
       - keycloak
@@ -270,15 +322,23 @@ services:
       DB_USERNAME: billing
       DB_PASSWORD: billing
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
-      KAFKA_BOOTSTRAP: kafka:9092
+      KAFKA_BOOTSTRAP: kafka1:9092,kafka2:9092,kafka3:9092
       SCHEDULE_BASE_URL: http://schedule-service:8093
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
       OIDC_ISSUER: http://keycloak:8080/realms/crp
       S2S_CLIENT_ID: billing-service-caller
       S2S_CLIENT_SECRET: billing-secret
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
+      MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     depends_on:
       - billing-postgres
-      - kafka
+      - kafka1
+      - kafka2
+      - kafka3
+      - redis
       - keycloak
     ports:
       - "8091:8091"
@@ -290,14 +350,19 @@ services:
     environment:
       SERVER_PORT: 8092
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
-      KAFKA_BOOTSTRAP: kafka:9092
+      KAFKA_BOOTSTRAP: kafka1:9092,kafka2:9092,kafka3:9092
       REDIS_HOST: redis
       REDIS_PORT: 6379
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
+      MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     ports:
       - "8092:8092"
     depends_on:
-      - kafka
+      - kafka1
+      - kafka2
+      - kafka3
       - redis
       - keycloak
 
@@ -315,6 +380,9 @@ services:
       DB_USERNAME: schedule
       DB_PASSWORD: schedule
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
+      MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     depends_on:
       - schedule-postgres
       - keycloak
@@ -329,6 +397,9 @@ services:
       SERVER_PORT: 8094
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
+      MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     ports:
       - "8094:8094"
     depends_on:
@@ -345,6 +416,9 @@ services:
       S2S_CLIENT_ID: bpm-service-caller
       S2S_CLIENT_SECRET: bpm-secret
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
+      MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     ports:
       - "8095:8095"
     depends_on:
@@ -393,6 +467,15 @@ services:
     depends_on:
       - loki
 
+  tempo:
+    image: grafana/tempo:2.5.0
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./monitoring/tempo.yml:/etc/tempo.yaml:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+
   accounting-postgres:
     image: postgres:16-alpine
     environment:
@@ -415,11 +498,19 @@ services:
       DB_PASSWORD: accounting
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       # INTERNAL_API_KEY removed (disabled by default)
-      KAFKA_BOOTSTRAP: kafka:9092
+      KAFKA_BOOTSTRAP: kafka1:9092,kafka2:9092,kafka3:9092
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
+      MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     depends_on:
       - accounting-postgres
-      - kafka
+      - kafka1
+      - kafka2
+      - kafka3
+      - redis
       - keycloak
     ports:
       - "8096:8096"
@@ -457,14 +548,19 @@ services:
       DB_URL: jdbc:postgresql://inventory-postgres:5432/inventorydb
       DB_USERNAME: inventory
       DB_PASSWORD: inventory
-      KAFKA_BOOTSTRAP: kafka:9092
+      KAFKA_BOOTSTRAP: kafka1:9092,kafka2:9092,kafka3:9092
       REDIS_HOST: redis
       REDIS_PORT: 6379
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
+      MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     depends_on:
       - inventory-postgres
-      - kafka
+      - kafka1
+      - kafka2
+      - kafka3
       - redis
       - keycloak
     ports:
@@ -479,14 +575,19 @@ services:
       DB_URL: jdbc:postgresql://procurement-postgres:5432/procurementdb
       DB_USERNAME: proc
       DB_PASSWORD: proc
-      KAFKA_BOOTSTRAP: kafka:9092
+      KAFKA_BOOTSTRAP: kafka1:9092,kafka2:9092,kafka3:9092
       REDIS_HOST: redis
       REDIS_PORT: 6379
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
+      MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     depends_on:
       - procurement-postgres
-      - kafka
+      - kafka1
+      - kafka2
+      - kafka3
       - redis
       - keycloak
     ports:
@@ -501,7 +602,7 @@ services:
       DB_URL: jdbc:postgresql://reports-postgres:5432/reportsdb
       DB_USERNAME: reports
       DB_PASSWORD: reports
-      KAFKA_BOOTSTRAP: kafka:9092
+      KAFKA_BOOTSTRAP: kafka1:9092,kafka2:9092,kafka3:9092
       REDIS_HOST: redis
       REDIS_PORT: 6379
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
@@ -511,11 +612,17 @@ services:
       OIDC_ISSUER: http://keycloak:8080/realms/crp
       S2S_CLIENT_ID: reports-service
       S2S_CLIENT_SECRET: reports-secret
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
+      MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     depends_on:
       - reports-postgres
       - inventory-service
       - procurement-service
       - keycloak
+      - kafka1
+      - kafka2
+      - kafka3
     ports:
       - "8084:8084"
 

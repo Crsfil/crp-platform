@@ -1,4 +1,7 @@
 spring:
+  autoconfigure:
+    exclude:
+      - com.example.crp.security.JwtAudienceAutoConfiguration
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9093}
   security:
