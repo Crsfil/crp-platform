@@ -1,5 +1,7 @@
 package com.example.crp.gateway.bff;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,5 +17,11 @@ public class BffConfig {
                 .exchangeStrategies(ExchangeStrategies.builder().codecs(c -> c.defaultCodecs().maxInMemorySize(1024 * 1024)).build())
                 .build();
     }
-}
 
+    @Bean
+    public Cache<String, BffTokenService.CachedAccess> accessTokenCache() {
+        return Caffeine.newBuilder()
+                .maximumSize(10_000)
+                .build();
+    }
+}

@@ -1,5 +1,6 @@
 package com.example.crp.gateway.bff;
 
+import com.example.crp.gateway.refresh.SingleFlightRefreshManager;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpHeaders;
@@ -9,16 +10,22 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Duration;
-
-import static com.example.crp.gateway.bff.AuthController.COOKIE_REFRESH;
+import java.util.Base64;
 
 @Component
 public class BffAuthFilter implements GlobalFilter, Ordered {
-    private final TokenService tokenService;
+    private final BffTokenService tokenService;
+    private final SingleFlightRefreshManager singleFlight;
     private final BffProperties props;
 
-    public BffAuthFilter(TokenService tokenService, BffProperties props) { this.tokenService = tokenService; this.props = props; }
+    public BffAuthFilter(BffTokenService tokenService, SingleFlightRefreshManager singleFlight, BffProperties props) {
+        this.tokenService = tokenService;
+        this.singleFlight = singleFlight;
+        this.props = props;
+    }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, org.springframework.cloud.gateway.filter.GatewayFilterChain chain) {
@@ -27,43 +34,75 @@ public class BffAuthFilter implements GlobalFilter, Ordered {
             return chain.filter(exchange);
         }
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        String refresh = exchange.getRequest().getCookies().getFirst(COOKIE_REFRESH) != null ? exchange.getRequest().getCookies().getFirst(COOKIE_REFRESH).getValue() : null;
+        var refreshCookie = exchange.getRequest().getCookies().getFirst(props.getCookie().getName());
+        String refresh = refreshCookie != null ? refreshCookie.getValue() : null;
         if ((refresh == null || refresh.isBlank()) && (authHeader == null || authHeader.isBlank())) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
-        TokenService.MonoAccess acc;
-        ServerWebExchange mutated = exchange;
-        if (refresh != null && !refresh.isBlank()) {
-            try {
-                acc = tokenService.ensureAccess(refresh, props.getProactiveRefreshSkewSeconds());
-            } catch (Exception ex) {
-                // if refresh flow failed but Authorization header was present, proceed; otherwise 401
-                if (authHeader == null || authHeader.isBlank()) {
-                    exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                    return exchange.getResponse().setComplete();
-                }
-                return chain.filter(exchange);
-            }
-            mutated = exchange.mutate().request(r -> r.headers(h -> h.set(HttpHeaders.AUTHORIZATION, "Bearer "+acc.accessToken()))).build();
-            if (acc.rotatedRefresh()) {
-                ResponseCookie.ResponseCookieBuilder b = ResponseCookie.from(COOKIE_REFRESH, acc.refreshToken()).httpOnly(true).path("/");
-                if (props.getCookie().getDomain() != null) b.domain(props.getCookie().getDomain());
-                if (props.getCookie().isSecure()) b.secure(true);
-                String ss = props.getCookie().getSameSite(); if (ss != null) b.sameSite(ss);
-                b.maxAge(Duration.ofDays(30));
-                mutated.getResponse().addCookie(b.build());
-            }
+        if (refresh == null || refresh.isBlank()) {
+            return chain.filter(exchange).then(clearOn401(exchange));
         }
-        ServerWebExchange exToUse = mutated;
-        return chain.filter(exToUse).then(Mono.defer(() -> {
-            if (exToUse.getResponse().getStatusCode() == HttpStatus.UNAUTHORIZED) {
-                // best-effort: clear access cache; next request will refresh
-                ResponseCookie clear = ResponseCookie.from(COOKIE_REFRESH, "").httpOnly(true).path("/").maxAge(Duration.ZERO).build();
-                exToUse.getResponse().addCookie(clear);
+        String sessionId = sha256(refresh);
+        return singleFlight.refresh(sessionId, () -> tokenService.refresh(refresh))
+                .flatMap(tp -> {
+                    ServerWebExchange mutated = exchange.mutate()
+                            .request(r -> r.headers(h -> h.set(HttpHeaders.AUTHORIZATION, "Bearer " + tp.accessToken())))
+                            .build();
+                    if (!tp.refreshToken().equals(refresh)) {
+                        mutated.getResponse().addCookie(buildRefreshCookie(tp.refreshToken()));
+                    }
+                    return chain.filter(mutated).then(clearOn401(mutated));
+                })
+                .onErrorResume(ex -> {
+                    if (authHeader == null || authHeader.isBlank()) {
+                        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                        return exchange.getResponse().setComplete();
+                    }
+                    return chain.filter(exchange).then(clearOn401(exchange));
+                });
+    }
+
+    private ResponseCookie buildRefreshCookie(String refreshToken) {
+        ResponseCookie.ResponseCookieBuilder b = ResponseCookie.from(props.getCookie().getName(), refreshToken)
+                .httpOnly(true)
+                .path("/")
+                .maxAge(Duration.ofDays(30));
+        if (props.getCookie().getDomain() != null) {
+            b = b.domain(props.getCookie().getDomain());
+        }
+        if (props.getCookie().isSecure()) {
+            b = b.secure(true);
+        }
+        String ss = props.getCookie().getSameSite();
+        if (ss != null) {
+            b = b.sameSite(ss);
+        }
+        return b.build();
+    }
+
+    private Mono<Void> clearOn401(ServerWebExchange exchange) {
+        return Mono.defer(() -> {
+            if (exchange.getResponse().getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                ResponseCookie clear = ResponseCookie.from(props.getCookie().getName(), "")
+                        .httpOnly(true)
+                        .path("/")
+                        .maxAge(Duration.ZERO)
+                        .build();
+                exchange.getResponse().addCookie(clear);
             }
             return Mono.empty();
-        }));
+        });
+    }
+
+    private static String sha256(String s) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] digest = md.digest(s.getBytes(StandardCharsets.UTF_8));
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
+        } catch (Exception e) {
+            return s;
+        }
     }
 
     @Override public int getOrder() { return -100; }
