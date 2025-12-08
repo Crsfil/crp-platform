@@ -15,3 +15,23 @@ crp:
   security:
     jwt:
       enforce-audience: true
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      externalKyc:
+        slidingWindowSize: 20
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+  retry:
+    instances:
+      externalKyc:
+        maxAttempts: 3
+        waitDuration: 200ms
+        exponentialBackoffMultiplier: 2
+  ratelimiter:
+    instances:
+      externalKyc:
+        limitForPeriod: 10
+        limitRefreshPeriod: 1s
+        timeoutDuration: 0

@@ -15,6 +15,10 @@ management:
       exposure:
         include: health,info,prometheus
 
+gateway:
+  idempotency:
+    ttl: ${GATEWAY_IDEMPOTENCY_TTL:PT24H}
+
 bff:
   issuer: ${BFF_ISSUER:http://keycloak:8080/realms/crp}
   client-id: ${BFF_CLIENT_ID:crp-cli}
