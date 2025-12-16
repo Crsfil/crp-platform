@@ -9,7 +9,7 @@ services:
     ports:
       - "18080:8080"
     volumes:
-      - ./keycloak/realm-export:/opt/keycloak/data/import:ro
+      - ./infrastructure/keycloak/realm-export:/opt/keycloak/data/import:ro
   zookeeper:
     image: confluentinc/cp-zookeeper:7.6.0
     environment:
@@ -167,7 +167,7 @@ services:
       BFF_CLIENT_ID: crp-cli
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://alloy:4318/v1/traces
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
       MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     depends_on:
@@ -201,7 +201,7 @@ services:
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       # INTERNAL_API_KEY removed (disabled by default)
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
-      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://alloy:4318/v1/traces
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
       MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     depends_on:
@@ -219,7 +219,7 @@ services:
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       # INTERNAL_API_KEY removed (disabled by default)
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
-      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://alloy:4318/v1/traces
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
       MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     ports:
@@ -236,7 +236,7 @@ services:
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       # INTERNAL_API_KEY removed (disabled by default)
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
-      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://alloy:4318/v1/traces
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
       MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     ports:
@@ -253,7 +253,7 @@ services:
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       # INTERNAL_API_KEY removed (disabled by default)
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
-      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://alloy:4318/v1/traces
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
       MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     ports:
@@ -279,7 +279,7 @@ services:
       S2S_CLIENT_ID: application-service-caller
       S2S_CLIENT_SECRET: application-secret
       BPM_BASE_URL: http://bpm-service:8095
-      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://alloy:4318/v1/traces
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
       MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     depends_on:
@@ -303,7 +303,7 @@ services:
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       # INTERNAL_API_KEY removed (disabled by default)
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
-      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://alloy:4318/v1/traces
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
       MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     depends_on:
@@ -330,7 +330,7 @@ services:
       OIDC_ISSUER: http://keycloak:8080/realms/crp
       S2S_CLIENT_ID: billing-service-caller
       S2S_CLIENT_SECRET: billing-secret
-      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://alloy:4318/v1/traces
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
       MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     depends_on:
@@ -354,7 +354,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
-      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://alloy:4318/v1/traces
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
       MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     ports:
@@ -380,7 +380,7 @@ services:
       DB_USERNAME: schedule
       DB_PASSWORD: schedule
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
-      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://alloy:4318/v1/traces
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
       MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     depends_on:
@@ -397,7 +397,7 @@ services:
       SERVER_PORT: 8094
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
-      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://alloy:4318/v1/traces
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
       MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     ports:
@@ -416,7 +416,7 @@ services:
       S2S_CLIENT_ID: bpm-service-caller
       S2S_CLIENT_SECRET: bpm-secret
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
-      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://alloy:4318/v1/traces
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
       MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     ports:
@@ -438,7 +438,7 @@ services:
   prometheus:
     image: prom/prometheus:latest
     volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infrastructure/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
       - "9090:9090"
 
@@ -450,6 +450,8 @@ services:
       - prometheus
     environment:
       - GF_FEATURE_TOGGLES_ENABLE=publicDashboards
+    volumes:
+      - ./infrastructure/observability/grafana/provisioning:/etc/grafana/provisioning:ro
 
   loki:
     image: grafana/loki:2.9.4
@@ -457,22 +459,23 @@ services:
     ports:
       - "3100:3100"
 
-  promtail:
-    image: grafana/promtail:2.9.4
+  alloy:
+    image: grafana/alloy:latest
+    command: ["run","/etc/alloy/config.alloy"]
     volumes:
-      - ./monitoring/promtail-config.yml:/etc/promtail/config.yml:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./infrastructure/observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
       - /var/run/docker.sock:/var/run/docker.sock
-    command: ["--config.file=/etc/promtail/config.yml"]
     depends_on:
       - loki
+      - tempo
 
   tempo:
     image: grafana/tempo:2.5.0
     command: ["-config.file=/etc/tempo.yaml"]
     volumes:
-      - ./monitoring/tempo.yml:/etc/tempo.yaml:ro
+      - ./infrastructure/observability/tempo.yml:/etc/tempo.yaml:ro
     ports:
+      - "3200:3200"
       - "4317:4317"
       - "4318:4318"
 
@@ -502,7 +505,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
-      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://alloy:4318/v1/traces
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
       MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     depends_on:
@@ -553,7 +556,7 @@ services:
       REDIS_PORT: 6379
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
-      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://alloy:4318/v1/traces
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
       MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     depends_on:
@@ -580,7 +583,7 @@ services:
       REDIS_PORT: 6379
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
-      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://alloy:4318/v1/traces
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
       MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     depends_on:
@@ -612,7 +615,7 @@ services:
       OIDC_ISSUER: http://keycloak:8080/realms/crp
       S2S_CLIENT_ID: reports-service
       S2S_CLIENT_SECRET: reports-secret
-      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://alloy:4318/v1/traces
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
       MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
     depends_on:

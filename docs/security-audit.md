@@ -5,7 +5,7 @@
 - Маршруты gateway вынесены в профиль по умолчанию (gateway-service/src/main/resources/application-default.yml); отдельный маршрут /oidc/** на Keycloak. Роут /auth/** больше не проксируется. Диаграмма: docs/diagrams/api-gateway-routes.mmd.
 - В ресурс‑сервисах включена проверка `aud` через модуль `common-security`; ожидаемая аудитория по умолчанию равна `spring.application.name` и везде `enforce-audience: true`.
 - `issuer-uri` для resource server передаётся через env в `docker-compose.yml` для всех сервисов (Keycloak realm `crp`).
-- Межсервисные вызовы настроены через `service-auth-client` (client credentials flow); для них в Keycloak экспортированы audience‑мапперы (см. `keycloak/realm-export/crp-realm.json`). Диаграмма: `docs/diagrams/service-interactions.mmd`.
+- Межсервисные вызовы настроены через `service-auth-client` (client credentials flow); для них в Keycloak экспортированы audience‑мапперы (см. `infrastructure/keycloak/realm-export/crp-realm.json`). Диаграмма: `docs/diagrams/service-interactions.mmd`.
 
 ## Обнаружения
 - Gateway security (`gateway-service/src/main/java/.../SecurityConfig.java`): `permitAll` на все запросы. BFF‑фильтр (`com.example.crp.gateway.bff.BffAuthFilter`) блокирует непубличные пути при отсутствии `Authorization` и refresh‑cookie; превентивный/повторный refresh реализованы фильтрами (`PreemptiveRefreshFilter`, `RetryOn401Filter`).

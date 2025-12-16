@@ -1,0 +1,40 @@
+logging {
+  level  = "info"
+  format = "logfmt"
+}
+
+// Collect container logs via Docker API and push to Loki.
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+loki.source.docker "containers" {
+  host       = "unix:///var/run/docker.sock"
+  forward_to = [loki.write.default.receiver]
+  labels = {
+    job = "docker"
+  }
+}
+
+// Receive OTLP traces from services and forward to Tempo.
+otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+
+  output {
+    traces = [otelcol.exporter.otlphttp.tempo.input]
+  }
+}
+
+otelcol.exporter.otlphttp "tempo" {
+  client {
+    endpoint = "http://tempo:4318"
+  }
+}
+

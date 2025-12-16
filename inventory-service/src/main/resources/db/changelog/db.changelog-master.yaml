@@ -28,3 +28,65 @@ databaseChangeLog:
                   name: created_at
                   type: TIMESTAMP WITH TIME ZONE
                   defaultValueComputed: CURRENT_TIMESTAMP
+  - changeSet:
+      id: 002-outbox
+      author: system
+      changes:
+        - createTable:
+            tableName: outbox_event
+            columns:
+              - column: { name: id, type: UUID, constraints: { primaryKey: true } }
+              - column: { name: aggregate_type, type: VARCHAR(64), constraints: { nullable: false } }
+              - column: { name: aggregate_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: event_type, type: VARCHAR(128), constraints: { nullable: false } }
+              - column: { name: topic, type: VARCHAR(128), constraints: { nullable: false } }
+              - column: { name: payload, type: TEXT, constraints: { nullable: false } }
+              - column: { name: status, type: VARCHAR(32), constraints: { nullable: false } }
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+              - column: { name: retry_count, type: INT, defaultValueNumeric: 0 }
+              - column: { name: last_error, type: VARCHAR(512) }
+              - column: { name: last_error_at, type: TIMESTAMP WITH TIME ZONE }
+        - createIndex:
+            indexName: idx_outbox_status_created
+            tableName: outbox_event
+            columns:
+              - column:
+                  name: status
+              - column:
+                  name: created_at
+  - changeSet:
+      id: 003-equipment-version
+      author: system
+      changes:
+        - addColumn:
+            tableName: equipment
+            columns:
+              - column:
+                  name: version
+                  type: BIGINT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: 004-equipment-reservations
+      author: system
+      changes:
+        - createTable:
+            tableName: equipment_reservation
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: request_id, type: BIGINT, constraints: { nullable: false, unique: true } }
+              - column: { name: equipment_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: status, type: VARCHAR(32), constraints: { nullable: false } }
+              - column: { name: reason, type: VARCHAR(256) }
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+              - column: { name: released_at, type: TIMESTAMP WITH TIME ZONE }
+        - createIndex:
+            indexName: idx_equipment_reservation_equipment_status
+            tableName: equipment_reservation
+            columns:
+              - column: { name: equipment_id }
+              - column: { name: status }
+        - sql:
+            dbms: postgresql
+            sql: CREATE UNIQUE INDEX IF NOT EXISTS ux_equipment_reservation_active_equipment ON equipment_reservation (equipment_id) WHERE status = 'ACTIVE';

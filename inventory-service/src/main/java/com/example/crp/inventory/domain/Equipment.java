@@ -11,6 +11,9 @@ public class Equipment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Version
+    private Long version;
     private String type;
     private String model;
     private String status;
@@ -19,6 +22,7 @@ public class Equipment {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+    public Long getVersion() { return version; }
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
     public String getModel() { return model; }

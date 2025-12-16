@@ -8,7 +8,7 @@
 - ANALYST — чтение отчётов/аналитики; ограниченные изменения.
 - USER — базовые пользовательские операции.
 
-Роли заданы в экспорте realm `keycloak/realm-export/crp-realm.json` (realm.roles).
+Роли заданы в экспорте realm `infrastructure/keycloak/realm-export/crp-realm.json` (realm.roles).
 
 ## Маппинг ролей в токены (claims)
 - Protocol mappers в клиенте `crp-cli` добавляют:

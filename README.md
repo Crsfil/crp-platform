@@ -20,7 +20,7 @@ CRP Platform
 
 Стек: Java 17, Spring Boot 3, Spring Security, JPA/Hibernate, Liquibase, PostgreSQL (на каждый сервис своя БД), Kafka, Redis, Actuator/Prometheus, OpenAPI.
 
-Локальная инфраструктура (docker-compose): Keycloak, Kafka/Zookeeper, Redis, Postgres для сервисов, Prometheus/Grafana/Loki/Promtail. Kubernetes-манифесты в каталоге `k8s/` (адаптируйте `image` и хосты под кластер).
+Локальная инфраструктура (docker-compose): Keycloak, Kafka/Zookeeper, Redis, Postgres для сервисов, Prometheus/Grafana/Loki/Tempo/Alloy. Kubernetes-манифесты в каталоге `infrastructure/k8s/` (адаптируйте `image` и хосты под кластер).
 
 Быстрый старт (Docker, Keycloak + RS256):
 - Запуск: `docker compose up -d --build` (в каталоге проекта)
@@ -56,8 +56,8 @@ CRP Platform
 - `docker compose build` (Dockerfile каждого сервиса сам собирает нужный модуль Maven).
 
 Kubernetes:
-- Применить неймспейс: `kubectl apply -f k8s/namespace.yaml`
-- Для сервисов: отредактируй `image` и `DB_URL`/Kafka/Redis хосты под свой кластер и применяй `kubectl apply -f k8s/<service>/deployment.yaml`.
+- Применить неймспейс: `kubectl apply -f infrastructure/k8s/namespace.yaml`
+- Для сервисов: отредактируй `image` и `DB_URL`/Kafka/Redis хосты под свой кластер и применяй `kubectl apply -f infrastructure/k8s/<service>/deployment.yaml`.
 
 Аутентификация и токены (Keycloak):
 - Браузерный вход через BFF: `http://localhost:8080/auth/login` — авторизация в Keycloak, `refresh_token` сохраняется в httpOnly cookie, шлюз автоматически подставляет `Authorization: Bearer ...` в запросы к микросервисам.

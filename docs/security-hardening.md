@@ -23,7 +23,7 @@
   - При успешном refresh обновляется refresh‑cookie и подменяется `Authorization` на новый AT.
 
 ## Ротация refresh‑токена/сессий в Keycloak
-- Включено в экспорт Realm: `keycloak/realm-export/crp-realm.json`.
+- Включено в экспорт Realm: `infrastructure/keycloak/realm-export/crp-realm.json`.
   - `revokeRefreshToken=true`, `refreshTokenMaxReuse=0`.
   - TTL по умолчанию: `accessTokenLifespan=900`, `refreshTokenLifespan=3600`.
 - Клиенты:
