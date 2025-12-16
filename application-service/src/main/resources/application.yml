@@ -12,6 +12,11 @@ spring:
       ddl-auto: validate
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:${SECURITY_JWT_ISSUER:http://keycloak:8080/realms/crp}}
 management:
   endpoints:
     web:
@@ -41,5 +46,6 @@ bpm:
 
 crp:
   security:
+    trusted-clients: ${CRP_TRUSTED_CLIENTS:reports-service}
     jwt:
       enforce-audience: true

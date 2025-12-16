@@ -53,6 +53,7 @@ schedule:
   base-url: ${SCHEDULE_BASE_URL:http://schedule-service:8093}
 crp:
   security:
+    trusted-clients: ${CRP_TRUSTED_CLIENTS:reports-service}
     jwt:
       enforce-audience: true
 outbox:

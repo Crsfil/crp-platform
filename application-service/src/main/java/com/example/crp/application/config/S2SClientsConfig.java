@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
-import reactor.netty.tcp.TcpClient;
 
 import java.time.Duration;
 
@@ -37,10 +36,9 @@ public class S2SClientsConfig {
     @Bean
     @Primary
     public WebClient.Builder instrumentedBuilder() {
-        TcpClient tcpClient = TcpClient.create()
+        HttpClient httpClient = HttpClient.create()
                 .responseTimeout(Duration.ofSeconds(2))
                 .option(io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS, 1_000);
-        HttpClient httpClient = HttpClient.from(tcpClient);
         return WebClient.builder().clientConnector(new ReactorClientHttpConnector(httpClient));
     }
 

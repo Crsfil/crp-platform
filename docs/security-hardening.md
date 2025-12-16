@@ -26,10 +26,10 @@
 - Включено в экспорт Realm: `infrastructure/keycloak/realm-export/crp-realm.json`.
   - `revokeRefreshToken=true`, `refreshTokenMaxReuse=0`.
   - TTL по умолчанию: `accessTokenLifespan=900`, `refreshTokenLifespan=3600`.
-- Клиенты:
-  - `crp-cli` — публичный (PKCE) для BFF.
-  - `inventory-service` — bearer‑only (ресурс).
-  - `reports-service` — confidential + Service Accounts; audience‑mapper добавляет `inventory-service` в `aud`.
+Клиенты:
+- `crp-cli` — публичный (PKCE) для BFF.
+- `inventory-service` — bearer‑only (ресурс).
+- `reports-service` — confidential + Service Accounts; audience‑mappers добавляют в `aud` целевые сервисы, которые он дергает по S2S (`inventory-service`, `procurement-service`, `agreement-service`, `billing-service`, `customer-service`, `application-service`).
 - Примечание: добавьте такие же пары клиентов и audience‑мапперов для каждого взаимодействия сервис→сервис.
 
 ## Требование `aud` в ресурс‑сервисах

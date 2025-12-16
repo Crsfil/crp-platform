@@ -14,17 +14,18 @@ CRP Platform
 - schedule-service — хранение графиков платежей
 - billing-service — инвойсинг, авто-начисления из графика
 - payments-service — вебхук платежей, идемпотентность (Redis) + Kafka
+- edocs-service — хранилище документов/вложений (S3/MinIO)
 - accounting-service — простая бухгалтерия (проводки по инвойсам/платежам)
 - gateway-service — API шлюз (единая точка входа, BFF)
 - bpm-service — BPMN процесс заявки (Flowable)
 
 Стек: Java 17, Spring Boot 3, Spring Security, JPA/Hibernate, Liquibase, PostgreSQL (на каждый сервис своя БД), Kafka, Redis, Actuator/Prometheus, OpenAPI.
 
-Локальная инфраструктура (docker-compose): Keycloak, Kafka/Zookeeper, Redis, Postgres для сервисов, Prometheus/Grafana/Loki/Tempo/Alloy. Kubernetes-манифесты в каталоге `infrastructure/k8s/` (адаптируйте `image` и хосты под кластер).
+Локальная инфраструктура (docker-compose): Keycloak, Kafka/Zookeeper, Redis, Postgres для сервисов, MinIO (S3‑совместимое хранилище для отчётов/вложений), Prometheus/Grafana/Loki/Tempo/Alloy. Kubernetes-манифесты в каталоге `infrastructure/k8s/` (адаптируйте `image` и хосты под кластер).
 
 Быстрый старт (Docker, Keycloak + RS256):
 - Запуск: `docker compose up -d --build` (в каталоге проекта)
-- Поднимутся: Keycloak (порт 18080), Kafka+ZK, Redis, Postgres и все сервисы.
+- Поднимутся: Keycloak (порт 18080), Kafka+ZK, Redis, MinIO (9000/9001), Postgres и все сервисы.
 - Keycloak автоматически импортирует realm `crp` (пользователь `admin@crp.local`/`admin`, роли `ADMIN/MANAGER/ANALYST/USER`, клиент `crp-cli`).
 
 Контуры по умолчанию (основные):
@@ -43,14 +44,16 @@ CRP Platform
 - schedule: http://localhost:8093
 - edocs: http://localhost:8094
 - bpm: http://localhost:8095
+- accounting: http://localhost:8096
 
 Конфигурация окружения (ключевое):
 - JWT ресурсы: `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI` указывает на Issuer Keycloak (`http://keycloak:8080/realms/crp`). Симметричный `SECURITY_JWT_SECRET` не используется ресурс‑сервисами.
-- BFF (gateway): `BFF_ISSUER`, `BFF_CLIENT_ID`, опционально `BFF_COOKIE_NAME` (по умолчанию `refresh_token`), `BFF_COOKIE_SAME_SITE`, `BFF_COOKIE_SECURE`, `BFF_COOKIE_DOMAIN`.
+- BFF (gateway): `BFF_ISSUER`, `BFF_CLIENT_ID`, опционально `BFF_COOKIE_NAME` (по умолчанию `refresh_token`), `BFF_COOKIE_SAMESITE`, `BFF_COOKIE_SECURE`, `BFF_COOKIE_DOMAIN`.
 - Service‑to‑Service: `OIDC_ISSUER`, `S2S_CLIENT_ID`, `S2S_CLIENT_SECRET` — для сервисов, которые дергают другие по client‑credentials (см. модуль `service-auth-client`).
-- Kafka/Redis: `KAFKA_BOOTSTRAP` (по умолчанию `kafka:9092`), `REDIS_HOST`/`REDIS_PORT` (по умолчанию `redis:6379`).
+- Kafka/Redis: `KAFKA_BOOTSTRAP` (по умолчанию `kafka1:9092,kafka2:9092,kafka3:9092`), `REDIS_HOST`/`REDIS_PORT` (по умолчанию `redis:6379`).
 - Базы данных: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` — для каждого сервиса свои (см. `src/main/resources/application.yml`).
 - Внутренние вызовы: механизм X-Internal-API-Key DEPRECATED и отключён по умолчанию; удалён из docker-compose. Для отладки можно включить `security.internal-api-key.enabled=true` и задать ключ `security.internal-api-key=...`, но рекомендуется S2S OAuth (client_credentials).
+- Файлы/вложения (S3/MinIO): `INVENTORY_DOCS_STORAGE_TYPE`/`INVENTORY_S3_*`, `PROCUREMENT_ATTACHMENTS_STORAGE_TYPE`/`PROCUREMENT_S3_*`, `REPORTS_STORAGE_TYPE`/`REPORTS_S3_*` (в `docker-compose.yml` по умолчанию включён MinIO).
 
 Сборка образов:
 - `docker compose build` (Dockerfile каждого сервиса сам собирает нужный модуль Maven).
@@ -107,17 +110,21 @@ Deprecated/Legacy
 - BFF в `gateway-service`: маршруты `/auth/login`, `/auth/callback`, `/auth/logout`. Refresh хранится в `HttpOnly` cookie, access обновляется автоматически и добавляется в заголовок при проксировании.
 - Kafka/Redis конфиги подключены, но бизнес-логика событий/кэшей не реализована — добавляй по мере разработки.
 
-Вариант B (на будущее): BFF
-- Для веб‑клиента добавьте слой BFF в `gateway-service`, храните refresh‑токен в httpOnly cookie и делайте авто‑refresh. В этом репо пока используется прямое получение токена для dev.
+BFF (реализовано):
+- `/auth/login`/`/auth/callback`/`/auth/logout` + refresh в `HttpOnly` cookie.
+- Single‑flight refresh через Redis: `docs/security-hardening.md`.
 
 Навигация по исходникам (ничего править не нужно — всё готово)
-- Маршрутизация API: `gateway-service/src/main/resources/application.yml:1`
+- Маршрутизация API: `gateway-service/src/main/resources/application-default.yml:1`
 - Заявки (оркестрация KYC/UW/ценообразования): `application-service/src/main/java/com/example/crp/app/web/ApplicationController.java:1`
 - Калькулятор графика: `product-pricing-service/src/main/java/com/example/crp/pricing/web/PricingController.java:1`
 - Договор: `agreement-service/src/main/java/com/example/crp/agreement/web/AgreementController.java:1`
 - Инвойсы: `billing-service/src/main/java/com/example/crp/billing/web/BillingController.java:1`
 - KYC/UW заглушки: `kyc-service/src/main/java/com/example/crp/kyc/web/KycController.java:1`, `underwriting-service/src/main/java/com/example/crp/underwriting/web/UnderwritingController.java:1`
 - Клиенты: `customer-service/src/main/java/com/example/crp/customer/web/CustomerController.java:1`
+- Инвентарь (asset lifecycle): `inventory-service/src/main/java/com/example/crp/inventory/web/EquipmentLifecycleController.java:1`
+- Закупки: `procurement-service/src/main/java/com/example/crp/procurement/web/ProcurementController.java:1`
+- Отчёты: `reports-service/src/main/java/com/example/crp/reports/web/ReportJobsController.java:1`
 - JWT/аутентификация: resource‑сервисы используют `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI` (Issuer Keycloak). `SECURITY_JWT_SECRET` — легаси и удалён из конфигураций; для машинных вызовов рекомендуется OAuth2 client_credentials вместо `INTERNAL_API_KEY`.
 
 Сборка Maven (если хочешь проверить без Docker)

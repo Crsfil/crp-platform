@@ -14,7 +14,7 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP:kafka:9092}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:kafka1:9092,kafka2:9092,kafka3:9092}
   data:
     redis:
       host: ${REDIS_HOST:redis}
