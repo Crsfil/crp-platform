@@ -2,25 +2,32 @@ package com.example.crp.reports.service;
 
 import com.example.crp.reports.domain.ReportJob;
 import com.example.crp.reports.repo.ReportJobRepository;
+import com.example.crp.reports.storage.ReportStorage;
 import jakarta.transaction.Transactional;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.OffsetDateTime;
 
 @Component
 public class HeavyReportJobExecutor implements Job {
 
+    private static final Logger log = LoggerFactory.getLogger(HeavyReportJobExecutor.class);
+    private static final String XLSX_CT = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
     private final ReportJobRepository reportJobRepository;
     private final ReportGenerator reportGenerator;
+    private final ReportStorage reportStorage;
 
     public HeavyReportJobExecutor(ReportJobRepository reportJobRepository,
-                                  ReportGenerator reportGenerator) {
+                                  ReportGenerator reportGenerator,
+                                  ReportStorage reportStorage) {
         this.reportJobRepository = reportJobRepository;
         this.reportGenerator = reportGenerator;
+        this.reportStorage = reportStorage;
     }
 
     @Override
@@ -35,6 +42,9 @@ public class HeavyReportJobExecutor implements Job {
             return;
         }
         job.setStatus("IN_PROGRESS");
+        job.setStartedAt(OffsetDateTime.now());
+        job.setFinishedAt(null);
+        job.setErrorMessage(null);
         reportJobRepository.save(job);
         try {
             byte[] data;
@@ -50,23 +60,43 @@ public class HeavyReportJobExecutor implements Job {
                 data = reportGenerator.invoicesCashflowXlsx();
             } else if ("APPLICATIONS_KPI_XLSX".equals(job.getType())) {
                 data = reportGenerator.applicationsKpiXlsx();
+            } else if ("PROCUREMENT_PIPELINE_XLSX".equals(job.getType())) {
+                data = reportGenerator.procurementPipelineXlsx();
+            } else if ("SUPPLIER_SPEND_XLSX".equals(job.getType())) {
+                data = reportGenerator.supplierSpendXlsx();
             } else {
                 job.setStatus("FAILED");
+                job.setFinishedAt(OffsetDateTime.now());
+                job.setErrorMessage("Unknown report type: " + job.getType());
                 reportJobRepository.save(job);
                 return;
             }
-            Path dir = Path.of("reports");
-            Files.createDirectories(dir);
+
             String fileName = "report-" + job.getId() + ".xlsx";
-            Path path = dir.resolve(fileName);
-            Files.write(path, data);
-            job.setFilePath(path.toAbsolutePath().toString());
+            ReportStorage.StoredReport stored = reportStorage.put("job-" + job.getId(), fileName, XLSX_CT, data);
+
+            job.setFileName(stored.fileName());
+            job.setContentType(stored.contentType());
+            job.setFileSize(stored.sizeBytes());
+            job.setSha256(stored.sha256Hex());
+            job.setStorageType(stored.storageType());
+            job.setStorageLocation(stored.location());
+            job.setFilePath("FILESYSTEM".equalsIgnoreCase(stored.storageType()) ? stored.location() : null);
             job.setStatus("DONE");
-            job.setCreatedAt(OffsetDateTime.now());
+            job.setFinishedAt(OffsetDateTime.now());
             reportJobRepository.save(job);
         } catch (Exception e) {
             job.setStatus("FAILED");
+            job.setFinishedAt(OffsetDateTime.now());
+            job.setErrorMessage(trim(e.getMessage(), 1000));
+            log.warn("Report job {} failed", jobId, e);
             reportJobRepository.save(job);
         }
+    }
+
+    private static String trim(String s, int max) {
+        if (s == null) return null;
+        if (s.length() <= max) return s;
+        return s.substring(0, max);
     }
 }

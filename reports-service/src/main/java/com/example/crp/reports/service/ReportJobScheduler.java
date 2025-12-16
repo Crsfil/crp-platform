@@ -72,6 +72,24 @@ public class ReportJobScheduler {
         return job;
     }
 
+    public ReportJob scheduleProcurementPipelineReport() {
+        ReportJob job = new ReportJob();
+        job.setType("PROCUREMENT_PIPELINE_XLSX");
+        job.setStatus("PENDING");
+        reportJobRepository.save(job);
+        scheduleQuartzJob(job.getId());
+        return job;
+    }
+
+    public ReportJob scheduleSupplierSpendReport() {
+        ReportJob job = new ReportJob();
+        job.setType("SUPPLIER_SPEND_XLSX");
+        job.setStatus("PENDING");
+        reportJobRepository.save(job);
+        scheduleQuartzJob(job.getId());
+        return job;
+    }
+
     private void scheduleQuartzJob(Long jobId) {
         try {
             JobDetail detail = JobBuilder.newJob(HeavyReportJobExecutor.class)

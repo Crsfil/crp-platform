@@ -85,8 +85,8 @@ public class ReportGenerator {
             for (Object o : reqs) {
                 Map<?,?> m = (Map<?,?>) o;
                 Row row = sheet.createRow(r++);
-                row.createCell(0).setCellValue(m.get("id").toString());
-                row.createCell(1).setCellValue(m.get("equipmentId").toString());
+                row.createCell(0).setCellValue(s(m.get("id")));
+                row.createCell(1).setCellValue(s(m.get("equipmentId")));
                 row.createCell(2).setCellValue(m.get("requesterId") == null ? "" : m.get("requesterId").toString());
                 row.createCell(3).setCellValue(s(m.get("status")));
             }
@@ -269,6 +269,216 @@ public class ReportGenerator {
             return out.toByteArray();
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public byte[] procurementPipelineXlsx() {
+        List<Map<String, Object>> requests = procurementClient.get().uri("/requests")
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(List.class)
+                .block();
+        List<Map<String, Object>> purchaseOrders = procurementClient.get().uri("/purchase-orders")
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(List.class)
+                .block();
+        List<Map<String, Object>> receipts = procurementClient.get().uri("/receipts")
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(List.class)
+                .block();
+        List<Map<String, Object>> suppliers = procurementClient.get().uri("/suppliers")
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(List.class)
+                .block();
+
+        Map<Long, String> supplierNameById = new HashMap<>();
+        if (suppliers != null) {
+            for (Map<String, Object> s : suppliers) {
+                Long id = nLong(s.get("id"));
+                if (id != null) {
+                    supplierNameById.put(id, this.s(s.get("name")));
+                }
+            }
+        }
+
+        Map<Long, List<Map<String, Object>>> poByRequestId = new HashMap<>();
+        if (purchaseOrders != null) {
+            for (Map<String, Object> po : purchaseOrders) {
+                Long requestId = nLong(po.get("requestId"));
+                if (requestId == null) continue;
+                poByRequestId.computeIfAbsent(requestId, k -> new java.util.ArrayList<>()).add(po);
+            }
+        }
+
+        Map<Long, List<Map<String, Object>>> receiptsByPoId = new HashMap<>();
+        if (receipts != null) {
+            for (Map<String, Object> gr : receipts) {
+                Long poId = nLong(gr.get("purchaseOrderId"));
+                if (poId == null) continue;
+                receiptsByPoId.computeIfAbsent(poId, k -> new java.util.ArrayList<>()).add(gr);
+            }
+        }
+
+        try (var wb = new XSSFWorkbook(); var out = new ByteArrayOutputStream()) {
+            Sheet sheet = wb.createSheet("ProcurementPipeline");
+            int r = 0;
+            Row header = sheet.createRow(r++);
+            header.createCell(0).setCellValue("REQUEST_ID");
+            header.createCell(1).setCellValue("KIND");
+            header.createCell(2).setCellValue("REQUEST_STATUS");
+            header.createCell(3).setCellValue("REQUEST_AMOUNT");
+            header.createCell(4).setCellValue("REQUEST_CREATED_AT");
+            header.createCell(5).setCellValue("PO_ID");
+            header.createCell(6).setCellValue("PO_STATUS");
+            header.createCell(7).setCellValue("SUPPLIER_ID");
+            header.createCell(8).setCellValue("SUPPLIER_NAME");
+            header.createCell(9).setCellValue("PO_TOTAL");
+            header.createCell(10).setCellValue("PO_CREATED_AT");
+            header.createCell(11).setCellValue("RECEIPT_ID");
+            header.createCell(12).setCellValue("RECEIPT_STATUS");
+            header.createCell(13).setCellValue("RECEIPT_CREATED_AT");
+
+            if (requests != null) {
+                for (Object o : requests) {
+                    Map<?, ?> req = (Map<?, ?>) o;
+                    Long requestId = nLong(req.get("id"));
+                    List<Map<String, Object>> pos = requestId == null ? List.of() : poByRequestId.getOrDefault(requestId, List.of());
+                    if (pos.isEmpty()) {
+                        Row row = sheet.createRow(r++);
+                        row.createCell(0).setCellValue(s(requestId));
+                        row.createCell(1).setCellValue(s(req.get("kind")));
+                        row.createCell(2).setCellValue(s(req.get("status")));
+                        row.createCell(3).setCellValue(s(req.get("amount")));
+                        row.createCell(4).setCellValue(s(req.get("createdAt")));
+                        continue;
+                    }
+                    for (Map<String, Object> po : pos) {
+                        Long poId = nLong(po.get("id"));
+                        Long supplierId = nLong(po.get("supplierId"));
+                        String supplierName = supplierId == null ? "" : supplierNameById.getOrDefault(supplierId, "");
+                        List<Map<String, Object>> grs = poId == null ? List.of() : receiptsByPoId.getOrDefault(poId, List.of());
+                        if (grs.isEmpty()) {
+                            Row row = sheet.createRow(r++);
+                            row.createCell(0).setCellValue(s(requestId));
+                            row.createCell(1).setCellValue(s(req.get("kind")));
+                            row.createCell(2).setCellValue(s(req.get("status")));
+                            row.createCell(3).setCellValue(s(req.get("amount")));
+                            row.createCell(4).setCellValue(s(req.get("createdAt")));
+                            row.createCell(5).setCellValue(s(poId));
+                            row.createCell(6).setCellValue(s(po.get("status")));
+                            row.createCell(7).setCellValue(s(supplierId));
+                            row.createCell(8).setCellValue(supplierName);
+                            row.createCell(9).setCellValue(s(po.get("totalAmount")));
+                            row.createCell(10).setCellValue(s(po.get("createdAt")));
+                            continue;
+                        }
+                        for (Map<String, Object> gr : grs) {
+                            Row row = sheet.createRow(r++);
+                            row.createCell(0).setCellValue(s(requestId));
+                            row.createCell(1).setCellValue(s(req.get("kind")));
+                            row.createCell(2).setCellValue(s(req.get("status")));
+                            row.createCell(3).setCellValue(s(req.get("amount")));
+                            row.createCell(4).setCellValue(s(req.get("createdAt")));
+                            row.createCell(5).setCellValue(s(poId));
+                            row.createCell(6).setCellValue(s(po.get("status")));
+                            row.createCell(7).setCellValue(s(supplierId));
+                            row.createCell(8).setCellValue(supplierName);
+                            row.createCell(9).setCellValue(s(po.get("totalAmount")));
+                            row.createCell(10).setCellValue(s(po.get("createdAt")));
+                            row.createCell(11).setCellValue(s(gr.get("id")));
+                            row.createCell(12).setCellValue(s(gr.get("status")));
+                            row.createCell(13).setCellValue(s(gr.get("createdAt")));
+                        }
+                    }
+                }
+            }
+
+            wb.write(out);
+            return out.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public byte[] supplierSpendXlsx() {
+        List<Map<String, Object>> purchaseOrders = procurementClient.get().uri("/purchase-orders")
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(List.class)
+                .block();
+        List<Map<String, Object>> suppliers = procurementClient.get().uri("/suppliers")
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(List.class)
+                .block();
+
+        Map<Long, String> supplierNameById = new HashMap<>();
+        if (suppliers != null) {
+            for (Map<String, Object> s : suppliers) {
+                Long id = nLong(s.get("id"));
+                if (id != null) {
+                    supplierNameById.put(id, this.s(s.get("name")));
+                }
+            }
+        }
+
+        Map<Long, java.math.BigDecimal> totalBySupplier = new HashMap<>();
+        Map<Long, Long> countBySupplier = new HashMap<>();
+        if (purchaseOrders != null) {
+            for (Map<String, Object> po : purchaseOrders) {
+                Long supplierId = nLong(po.get("supplierId"));
+                if (supplierId == null) continue;
+                java.math.BigDecimal total = nBigDecimal(po.get("totalAmount"));
+                totalBySupplier.merge(supplierId, total, java.math.BigDecimal::add);
+                countBySupplier.merge(supplierId, 1L, Long::sum);
+            }
+        }
+
+        try (var wb = new XSSFWorkbook(); var out = new ByteArrayOutputStream()) {
+            Sheet sheet = wb.createSheet("SupplierSpend");
+            int r = 0;
+            Row header = sheet.createRow(r++);
+            header.createCell(0).setCellValue("SUPPLIER_ID");
+            header.createCell(1).setCellValue("SUPPLIER_NAME");
+            header.createCell(2).setCellValue("PO_COUNT");
+            header.createCell(3).setCellValue("TOTAL_AMOUNT");
+
+            for (var entry : totalBySupplier.entrySet()) {
+                Long supplierId = entry.getKey();
+                Row row = sheet.createRow(r++);
+                row.createCell(0).setCellValue(s(supplierId));
+                row.createCell(1).setCellValue(supplierNameById.getOrDefault(supplierId, ""));
+                row.createCell(2).setCellValue(countBySupplier.getOrDefault(supplierId, 0L));
+                row.createCell(3).setCellValue(entry.getValue().toPlainString());
+            }
+            wb.write(out);
+            return out.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static Long nLong(Object o) {
+        if (o == null) return null;
+        if (o instanceof Number n) return n.longValue();
+        try {
+            return Long.parseLong(o.toString());
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private static java.math.BigDecimal nBigDecimal(Object o) {
+        if (o == null) return java.math.BigDecimal.ZERO;
+        if (o instanceof java.math.BigDecimal bd) return bd;
+        if (o instanceof Number n) return java.math.BigDecimal.valueOf(n.doubleValue());
+        try {
+            return new java.math.BigDecimal(o.toString());
+        } catch (Exception ignored) {
+            return java.math.BigDecimal.ZERO;
         }
     }
 

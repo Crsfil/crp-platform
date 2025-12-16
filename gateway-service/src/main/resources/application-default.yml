@@ -7,10 +7,10 @@ spring:
         #   predicates: [ Path=/auth/** ]
         - id: inventory
           uri: http://inventory-service:8082
-          predicates: [ Path=/inventory/**, Path=/equipment/** ]
+          predicates: [ Path=/inventory/**, Path=/equipment/**, Path=/locations/** ]
         - id: procurement
           uri: http://procurement-service:8083
-          predicates: [ Path=/requests/** ]
+          predicates: [ Path=/requests/**, Path=/suppliers/**, Path=/purchase-orders/**, Path=/receipts/**, Path=/attachments/** ]
         - id: reports
           uri: http://reports-service:8084
           predicates: [ Path=/reports/** ]

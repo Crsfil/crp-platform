@@ -10,6 +10,12 @@
 
 Роли заданы в экспорте realm `infrastructure/keycloak/realm-export/crp-realm.json` (realm.roles).
 
+## Права (fine-grained roles в Keycloak)
+Для enterprise‑сценариев (минимум для CRUD/approve/read) заведены отдельные realm roles, которые попадают в claim `authorities` и используются в `@PreAuthorize`:
+- INVENTORY_READ / INVENTORY_WRITE
+- PROCUREMENT_READ / PROCUREMENT_WRITE / PROCUREMENT_APPROVE
+- REPORTS_READ
+
 ## Маппинг ролей в токены (claims)
 - Protocol mappers в клиенте `crp-cli` добавляют:
   - claim `roles` (массив) — роли realm без префиксов.
@@ -23,7 +29,7 @@
   - Примеры смотрите в `*/src/main/java/.../config/SecurityConfig.java` (kyc-service, schedule-service, payments-service и др.).
 - Способы навешивания правил:
   - На маршруты: `.authorizeHttpRequests(a -> a.requestMatchers("/admin/**").hasRole("ADMIN").anyRequest().authenticated())`.
-  - На методы: `@PreAuthorize("hasRole('MANAGER') or hasAuthority('REPORT_READ')")` (включено `@EnableMethodSecurity`).
+  - На методы: `@PreAuthorize("hasRole('MANAGER') or hasAuthority('REPORTS_READ')")` (включено `@EnableMethodSecurity`).
 
 ## Аудитория (aud)
 - Каждый ресурс‑сервис принимает токен только со своей аудиторией (`aud` = `spring.application.name`).
@@ -45,4 +51,3 @@
 - TTL: access_token 10–15 мин, refresh_token 30–60 мин (или бизнес‑политика). BFF реализует single‑flight refresh.
 - Масштаб Keycloak: 2–3 реплики + внешняя БД Postgres с резервным копированием; включить метрики и мониторинг.
 - Тестирование: интеграционные кейсы 401 (нет/неверный aud/issuer), 403 (недостаточно ролей), happy‑path для ролей.
-

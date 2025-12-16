@@ -90,3 +90,646 @@ databaseChangeLog:
         - sql:
             dbms: postgresql
             sql: CREATE UNIQUE INDEX IF NOT EXISTS ux_equipment_reservation_active_equipment ON equipment_reservation (equipment_id) WHERE status = 'ACTIVE';
+  - changeSet:
+      id: 005-inbound-receipt
+      author: system
+      changes:
+        - createTable:
+            tableName: inbound_receipt
+            columns:
+              - column: { name: receipt_id, type: BIGINT, constraints: { primaryKey: true } }
+              - column: { name: purchase_order_id, type: BIGINT }
+              - column: { name: request_id, type: BIGINT }
+              - column: { name: supplier_id, type: BIGINT }
+              - column: { name: processed_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+  - changeSet:
+      id: 006-equipment-source-links
+      author: system
+      changes:
+        - addColumn:
+            tableName: equipment
+            columns:
+              - column: { name: source_receipt_id, type: BIGINT }
+              - column: { name: source_purchase_order_id, type: BIGINT }
+              - column: { name: source_request_id, type: BIGINT }
+              - column: { name: source_supplier_id, type: BIGINT }
+              - column: { name: source_purchase_order_line_id, type: BIGINT }
+              - column: { name: source_request_line_id, type: BIGINT }
+        - createIndex:
+            indexName: idx_equipment_source_receipt
+            tableName: equipment
+            columns:
+              - column: { name: source_receipt_id }
+
+  - changeSet:
+      id: 007-equipment-enterprise-fields
+      author: system
+      changes:
+        - addColumn:
+            tableName: equipment
+            columns:
+              - column: { name: inventory_number, type: VARCHAR(64) }
+              - column: { name: serial_number, type: VARCHAR(128) }
+              - column: { name: manufacturer, type: VARCHAR(128) }
+              - column: { name: condition, type: VARCHAR(32) }
+              - column: { name: location_id, type: BIGINT }
+              - column: { name: responsible_username, type: VARCHAR(128) }
+              - column: { name: updated_at, type: TIMESTAMP WITH TIME ZONE }
+        - createIndex:
+            indexName: idx_equipment_inventory_number
+            tableName: equipment
+            columns:
+              - column: { name: inventory_number }
+        - createIndex:
+            indexName: idx_equipment_location
+            tableName: equipment
+            columns:
+              - column: { name: location_id }
+
+  - changeSet:
+      id: 008-location
+      author: system
+      changes:
+        - createTable:
+            tableName: location
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: code, type: VARCHAR(64), constraints: { nullable: false, unique: true } }
+              - column: { name: name, type: VARCHAR(256), constraints: { nullable: false } }
+              - column: { name: type, type: VARCHAR(32), constraints: { nullable: false } }
+              - column: { name: status, type: VARCHAR(32), constraints: { nullable: false }, defaultValue: ACTIVE }
+              - column: { name: address, type: TEXT }
+              - column: { name: region, type: VARCHAR(64) }
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+              - column: { name: updated_at, type: TIMESTAMP WITH TIME ZONE }
+
+  - changeSet:
+      id: 009-equipment-audit-tables
+      author: system
+      changes:
+        - createTable:
+            tableName: equipment_movement
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: equipment_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: from_location_id, type: BIGINT }
+              - column: { name: to_location_id, type: BIGINT }
+              - column: { name: moved_by, type: VARCHAR(128) }
+              - column: { name: reason, type: VARCHAR(256) }
+              - column: { name: moved_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+              - column: { name: correlation_id, type: VARCHAR(64) }
+        - addForeignKeyConstraint:
+            baseTableName: equipment_movement
+            baseColumnNames: equipment_id
+            referencedTableName: equipment
+            referencedColumnNames: id
+            constraintName: fk_equipment_movement_equipment
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: equipment_movement
+            baseColumnNames: from_location_id
+            referencedTableName: location
+            referencedColumnNames: id
+            constraintName: fk_equipment_movement_from_location
+        - addForeignKeyConstraint:
+            baseTableName: equipment_movement
+            baseColumnNames: to_location_id
+            referencedTableName: location
+            referencedColumnNames: id
+            constraintName: fk_equipment_movement_to_location
+        - createIndex:
+            indexName: idx_equipment_movement_equipment_time
+            tableName: equipment_movement
+            columns:
+              - column: { name: equipment_id }
+              - column: { name: moved_at }
+
+        - createTable:
+            tableName: equipment_status_history
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: equipment_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: from_status, type: VARCHAR(64) }
+              - column: { name: to_status, type: VARCHAR(64), constraints: { nullable: false } }
+              - column: { name: changed_by, type: VARCHAR(128) }
+              - column: { name: reason, type: VARCHAR(256) }
+              - column: { name: changed_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+              - column: { name: correlation_id, type: VARCHAR(64) }
+        - addForeignKeyConstraint:
+            baseTableName: equipment_status_history
+            baseColumnNames: equipment_id
+            referencedTableName: equipment
+            referencedColumnNames: id
+            constraintName: fk_equipment_status_history_equipment
+            onDelete: CASCADE
+        - createIndex:
+            indexName: idx_equipment_status_history_equipment_time
+            tableName: equipment_status_history
+            columns:
+              - column: { name: equipment_id }
+              - column: { name: changed_at }
+
+  - changeSet:
+      id: 010-equipment-documents
+      author: system
+      changes:
+        - createTable:
+            tableName: equipment_document
+            columns:
+              - column: { name: id, type: UUID, constraints: { primaryKey: true } }
+              - column: { name: equipment_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: doc_type, type: VARCHAR(64) }
+              - column: { name: file_name, type: VARCHAR(256), constraints: { nullable: false } }
+              - column: { name: content_type, type: VARCHAR(128) }
+              - column: { name: size_bytes, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: sha256, type: VARCHAR(64) }
+              - column: { name: storage_type, type: VARCHAR(32), constraints: { nullable: false } }
+              - column: { name: storage_location, type: VARCHAR(512), constraints: { nullable: false } }
+              - column: { name: created_by, type: VARCHAR(128) }
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+        - addForeignKeyConstraint:
+            baseTableName: equipment_document
+            baseColumnNames: equipment_id
+            referencedTableName: equipment
+            referencedColumnNames: id
+            constraintName: fk_equipment_document_equipment
+            onDelete: CASCADE
+        - createIndex:
+            indexName: idx_equipment_document_equipment
+            tableName: equipment_document
+            columns:
+              - column: { name: equipment_id }
+
+  - changeSet:
+      id: 011-equipment-constraints
+      author: system
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: equipment
+            baseColumnNames: location_id
+            referencedTableName: location
+            referencedColumnNames: id
+            constraintName: fk_equipment_location
+        - sql:
+            dbms: postgresql
+            sql: CREATE UNIQUE INDEX IF NOT EXISTS ux_equipment_inventory_number ON equipment (inventory_number) WHERE inventory_number IS NOT NULL AND inventory_number <> '';
+        - sql:
+            dbms: postgresql
+            sql: CREATE UNIQUE INDEX IF NOT EXISTS ux_equipment_serial_number ON equipment (serial_number) WHERE serial_number IS NOT NULL AND serial_number <> '';
+
+  - changeSet:
+      id: 012-location-hierarchy
+      author: system
+      changes:
+        - addColumn:
+            tableName: location
+            columns:
+              - column: { name: parent_id, type: BIGINT }
+              - column: { name: path, type: VARCHAR(512) }
+              - column: { name: level, type: INT, defaultValueNumeric: 0, constraints: { nullable: false } }
+        - addForeignKeyConstraint:
+            baseTableName: location
+            baseColumnNames: parent_id
+            referencedTableName: location
+            referencedColumnNames: id
+            constraintName: fk_location_parent
+        - createIndex:
+            indexName: idx_location_parent
+            tableName: location
+            columns:
+              - column: { name: parent_id }
+        - createIndex:
+            indexName: idx_location_path
+            tableName: location
+            columns:
+              - column: { name: path }
+
+  - changeSet:
+      id: 013-stocktake
+      author: system
+      changes:
+        - createTable:
+            tableName: stocktake
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: location_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: status, type: VARCHAR(32), constraints: { nullable: false } } # OPEN, SUBMITTED, CLOSED
+              - column: { name: title, type: VARCHAR(256) }
+              - column: { name: created_by, type: VARCHAR(128) }
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+              - column: { name: submitted_at, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: closed_at, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: correlation_id, type: VARCHAR(64) }
+        - addForeignKeyConstraint:
+            baseTableName: stocktake
+            baseColumnNames: location_id
+            referencedTableName: location
+            referencedColumnNames: id
+            constraintName: fk_stocktake_location
+        - createIndex:
+            indexName: idx_stocktake_location_status
+            tableName: stocktake
+            columns:
+              - column: { name: location_id }
+              - column: { name: status }
+
+        - createTable:
+            tableName: stocktake_line
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: stocktake_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: equipment_id, type: BIGINT }
+              - column: { name: inventory_number, type: VARCHAR(64) }
+              - column: { name: serial_number, type: VARCHAR(128) }
+              - column: { name: expected_location_id, type: BIGINT }
+              - column: { name: expected_status, type: VARCHAR(64) }
+              - column: { name: expected_responsible, type: VARCHAR(128) }
+              - column: { name: counted_present, type: BOOLEAN }
+              - column: { name: counted_location_id, type: BIGINT }
+              - column: { name: counted_status, type: VARCHAR(64) }
+              - column: { name: counted_by, type: VARCHAR(128) }
+              - column: { name: counted_at, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: note, type: VARCHAR(256) }
+        - addForeignKeyConstraint:
+            baseTableName: stocktake_line
+            baseColumnNames: stocktake_id
+            referencedTableName: stocktake
+            referencedColumnNames: id
+            constraintName: fk_stocktake_line_stocktake
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: stocktake_line
+            baseColumnNames: equipment_id
+            referencedTableName: equipment
+            referencedColumnNames: id
+            constraintName: fk_stocktake_line_equipment
+        - createIndex:
+            indexName: idx_stocktake_line_stocktake
+            tableName: stocktake_line
+            columns:
+              - column: { name: stocktake_id }
+        - createIndex:
+            indexName: idx_stocktake_line_equipment
+            tableName: stocktake_line
+            columns:
+              - column: { name: equipment_id }
+        - sql:
+            dbms: postgresql
+            sql: CREATE UNIQUE INDEX IF NOT EXISTS ux_stocktake_line_equipment_per_stocktake ON stocktake_line (stocktake_id, equipment_id) WHERE equipment_id IS NOT NULL;
+
+  - changeSet:
+      id: 014-equipment-lease
+      author: system
+      changes:
+        - createTable:
+            tableName: equipment_lease
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: equipment_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: agreement_id, type: BIGINT }
+              - column: { name: customer_id, type: BIGINT }
+              - column: { name: issued_from_location_id, type: BIGINT }
+              - column: { name: issued_to_location_id, type: BIGINT }
+              - column: { name: status, type: VARCHAR(32), constraints: { nullable: false } } # ACTIVE, CLOSED, DEFAULTED
+              - column: { name: start_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+              - column: { name: expected_return_at, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: end_at, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: returned_at, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: repossessed_at, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: note, type: VARCHAR(512) }
+              - column: { name: created_by, type: VARCHAR(128) }
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+              - column: { name: updated_at, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: correlation_id, type: VARCHAR(64) }
+        - addForeignKeyConstraint:
+            baseTableName: equipment_lease
+            baseColumnNames: equipment_id
+            referencedTableName: equipment
+            referencedColumnNames: id
+            constraintName: fk_equipment_lease_equipment
+        - addForeignKeyConstraint:
+            baseTableName: equipment_lease
+            baseColumnNames: issued_from_location_id
+            referencedTableName: location
+            referencedColumnNames: id
+            constraintName: fk_equipment_lease_from_location
+        - addForeignKeyConstraint:
+            baseTableName: equipment_lease
+            baseColumnNames: issued_to_location_id
+            referencedTableName: location
+            referencedColumnNames: id
+            constraintName: fk_equipment_lease_to_location
+        - createIndex:
+            indexName: idx_equipment_lease_equipment
+            tableName: equipment_lease
+            columns:
+              - column: { name: equipment_id }
+        - createIndex:
+            indexName: idx_equipment_lease_status
+            tableName: equipment_lease
+            columns:
+              - column: { name: status }
+        - sql:
+            dbms: postgresql
+            sql: CREATE UNIQUE INDEX IF NOT EXISTS ux_equipment_lease_active ON equipment_lease (equipment_id) WHERE status = 'ACTIVE';
+
+  - changeSet:
+      id: 015-equipment-disposition
+      author: system
+      changes:
+        - createTable:
+            tableName: equipment_disposition
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: equipment_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: type, type: VARCHAR(32), constraints: { nullable: false } } # SALE, DISPOSAL
+              - column: { name: status, type: VARCHAR(32), constraints: { nullable: false } } # DRAFT, APPROVED, COMPLETED, CANCELED
+              - column: { name: planned_price, type: NUMERIC(18,2) }
+              - column: { name: actual_price, type: NUMERIC(18,2) }
+              - column: { name: currency, type: VARCHAR(3) }
+              - column: { name: counterparty_name, type: VARCHAR(256) }
+              - column: { name: counterparty_inn, type: VARCHAR(32) }
+              - column: { name: location_id, type: BIGINT }
+              - column: { name: performed_at, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: note, type: VARCHAR(512) }
+              - column: { name: created_by, type: VARCHAR(128) }
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+              - column: { name: updated_at, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: correlation_id, type: VARCHAR(64) }
+        - addForeignKeyConstraint:
+            baseTableName: equipment_disposition
+            baseColumnNames: equipment_id
+            referencedTableName: equipment
+            referencedColumnNames: id
+            constraintName: fk_equipment_disposition_equipment
+        - addForeignKeyConstraint:
+            baseTableName: equipment_disposition
+            baseColumnNames: location_id
+            referencedTableName: location
+            referencedColumnNames: id
+            constraintName: fk_equipment_disposition_location
+        - createIndex:
+            indexName: idx_equipment_disposition_equipment
+            tableName: equipment_disposition
+            columns:
+              - column: { name: equipment_id }
+        - createIndex:
+            indexName: idx_equipment_disposition_status
+            tableName: equipment_disposition
+            columns:
+              - column: { name: status }
+        - sql:
+            dbms: postgresql
+            sql: CREATE UNIQUE INDEX IF NOT EXISTS ux_equipment_disposition_open ON equipment_disposition (equipment_id) WHERE status IN ('DRAFT','APPROVED');
+
+  - changeSet:
+      id: 016-equipment-inspection
+      author: system
+      changes:
+        - createTable:
+            tableName: equipment_inspection
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: equipment_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: type, type: VARCHAR(32), constraints: { nullable: false } } # RETURN, PRE_SALE, PERIODIC, OTHER
+              - column: { name: status, type: VARCHAR(32), constraints: { nullable: false } } # DRAFT, SUBMITTED, APPROVED, COMPLETED, CANCELED
+              - column: { name: location_id, type: BIGINT }
+              - column: { name: inspected_at, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: conclusion, type: VARCHAR(32) } # OK, DAMAGED, LOST
+              - column: { name: recommended_action, type: VARCHAR(32) } # NONE, REPAIR, DISPOSITION
+              - column: { name: estimated_repair_cost, type: NUMERIC(18,2) }
+              - column: { name: summary, type: VARCHAR(512) }
+              - column: { name: created_by, type: VARCHAR(128) }
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+              - column: { name: updated_at, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: correlation_id, type: VARCHAR(64) }
+        - addForeignKeyConstraint:
+            baseTableName: equipment_inspection
+            baseColumnNames: equipment_id
+            referencedTableName: equipment
+            referencedColumnNames: id
+            constraintName: fk_equipment_inspection_equipment
+        - addForeignKeyConstraint:
+            baseTableName: equipment_inspection
+            baseColumnNames: location_id
+            referencedTableName: location
+            referencedColumnNames: id
+            constraintName: fk_equipment_inspection_location
+        - createIndex:
+            indexName: idx_equipment_inspection_equipment
+            tableName: equipment_inspection
+            columns:
+              - column: { name: equipment_id }
+        - createIndex:
+            indexName: idx_equipment_inspection_status
+            tableName: equipment_inspection
+            columns:
+              - column: { name: status }
+        - sql:
+            dbms: postgresql
+            sql: CREATE UNIQUE INDEX IF NOT EXISTS ux_equipment_inspection_open ON equipment_inspection (equipment_id) WHERE status IN ('DRAFT','SUBMITTED','APPROVED');
+
+        - createTable:
+            tableName: equipment_inspection_finding
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: inspection_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: code, type: VARCHAR(64) }
+              - column: { name: severity, type: VARCHAR(32) } # MINOR, MAJOR, CRITICAL
+              - column: { name: description, type: VARCHAR(512) }
+              - column: { name: estimated_cost, type: NUMERIC(18,2) }
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+        - addForeignKeyConstraint:
+            baseTableName: equipment_inspection_finding
+            baseColumnNames: inspection_id
+            referencedTableName: equipment_inspection
+            referencedColumnNames: id
+            constraintName: fk_equipment_inspection_finding_inspection
+            onDelete: CASCADE
+        - createIndex:
+            indexName: idx_equipment_inspection_finding_inspection
+            tableName: equipment_inspection_finding
+            columns:
+              - column: { name: inspection_id }
+
+        - createTable:
+            tableName: equipment_inspection_document
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: inspection_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: document_id, type: UUID, constraints: { nullable: false } }
+              - column: { name: relation_type, type: VARCHAR(32) } # PHOTO, ACT, OTHER
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+        - addForeignKeyConstraint:
+            baseTableName: equipment_inspection_document
+            baseColumnNames: inspection_id
+            referencedTableName: equipment_inspection
+            referencedColumnNames: id
+            constraintName: fk_equipment_inspection_document_inspection
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: equipment_inspection_document
+            baseColumnNames: document_id
+            referencedTableName: equipment_document
+            referencedColumnNames: id
+            constraintName: fk_equipment_inspection_document_document
+            onDelete: CASCADE
+        - sql:
+            dbms: postgresql
+            sql: CREATE UNIQUE INDEX IF NOT EXISTS ux_equipment_inspection_document ON equipment_inspection_document (inspection_id, document_id);
+
+  - changeSet:
+      id: 017-disposition-sale-deepen
+      author: system
+      changes:
+        - addColumn:
+            tableName: equipment_disposition
+            columns:
+              - column: { name: sale_method, type: VARCHAR(32) } # DIRECT, AUCTION
+              - column: { name: lot_number, type: VARCHAR(64) }
+              - column: { name: contract_number, type: VARCHAR(64) }
+              - column: { name: invoice_number, type: VARCHAR(64) }
+              - column: { name: paid_at, type: TIMESTAMP WITH TIME ZONE }
+        - sql:
+            dbms: postgresql
+            sql: DROP INDEX IF EXISTS ux_equipment_disposition_open;
+        - sql:
+            dbms: postgresql
+            sql: CREATE UNIQUE INDEX IF NOT EXISTS ux_equipment_disposition_open ON equipment_disposition (equipment_id) WHERE status IN ('DRAFT','APPROVED','CONTRACTED','INVOICED','PAID');
+
+        - createTable:
+            tableName: equipment_disposition_document
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: disposition_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: document_id, type: UUID, constraints: { nullable: false } }
+              - column: { name: relation_type, type: VARCHAR(32) } # CONTRACT, INVOICE, PHOTO, ACT, OTHER
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+        - addForeignKeyConstraint:
+            baseTableName: equipment_disposition_document
+            baseColumnNames: disposition_id
+            referencedTableName: equipment_disposition
+            referencedColumnNames: id
+            constraintName: fk_equipment_disposition_document_disposition
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: equipment_disposition_document
+            baseColumnNames: document_id
+            referencedTableName: equipment_document
+            referencedColumnNames: id
+            constraintName: fk_equipment_disposition_document_document
+            onDelete: CASCADE
+        - sql:
+            dbms: postgresql
+            sql: CREATE UNIQUE INDEX IF NOT EXISTS ux_equipment_disposition_document ON equipment_disposition_document (disposition_id, document_id);
+
+  - changeSet:
+      id: 018-equipment-repair
+      author: system
+      changes:
+        - createTable:
+            tableName: equipment_repair_order
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: equipment_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: inspection_id, type: BIGINT }
+              - column: { name: status, type: VARCHAR(32), constraints: { nullable: false } } # DRAFT, APPROVED, IN_PROGRESS, COMPLETED, CANCELED
+              - column: { name: repair_location_id, type: BIGINT }
+              - column: { name: vendor_name, type: VARCHAR(256) }
+              - column: { name: vendor_inn, type: VARCHAR(32) }
+              - column: { name: planned_cost, type: NUMERIC(18,2) }
+              - column: { name: actual_cost, type: NUMERIC(18,2) }
+              - column: { name: currency, type: VARCHAR(3) }
+              - column: { name: started_at, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: completed_at, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: note, type: VARCHAR(512) }
+              - column: { name: created_by, type: VARCHAR(128) }
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+              - column: { name: updated_at, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: correlation_id, type: VARCHAR(64) }
+        - addForeignKeyConstraint:
+            baseTableName: equipment_repair_order
+            baseColumnNames: equipment_id
+            referencedTableName: equipment
+            referencedColumnNames: id
+            constraintName: fk_equipment_repair_equipment
+        - addForeignKeyConstraint:
+            baseTableName: equipment_repair_order
+            baseColumnNames: inspection_id
+            referencedTableName: equipment_inspection
+            referencedColumnNames: id
+            constraintName: fk_equipment_repair_inspection
+        - addForeignKeyConstraint:
+            baseTableName: equipment_repair_order
+            baseColumnNames: repair_location_id
+            referencedTableName: location
+            referencedColumnNames: id
+            constraintName: fk_equipment_repair_location
+        - createIndex:
+            indexName: idx_equipment_repair_equipment
+            tableName: equipment_repair_order
+            columns:
+              - column: { name: equipment_id }
+        - createIndex:
+            indexName: idx_equipment_repair_status
+            tableName: equipment_repair_order
+            columns:
+              - column: { name: status }
+        - sql:
+            dbms: postgresql
+            sql: CREATE UNIQUE INDEX IF NOT EXISTS ux_equipment_repair_open ON equipment_repair_order (equipment_id) WHERE status IN ('DRAFT','APPROVED','IN_PROGRESS');
+
+        - createTable:
+            tableName: equipment_repair_document
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: repair_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: document_id, type: UUID, constraints: { nullable: false } }
+              - column: { name: relation_type, type: VARCHAR(32) } # REQUEST, INVOICE, ACT, PHOTO, OTHER
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+        - addForeignKeyConstraint:
+            baseTableName: equipment_repair_document
+            baseColumnNames: repair_id
+            referencedTableName: equipment_repair_order
+            referencedColumnNames: id
+            constraintName: fk_equipment_repair_document_repair
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: equipment_repair_document
+            baseColumnNames: document_id
+            referencedTableName: equipment_document
+            referencedColumnNames: id
+            constraintName: fk_equipment_repair_document_document
+            onDelete: CASCADE
+        - sql:
+            dbms: postgresql
+            sql: CREATE UNIQUE INDEX IF NOT EXISTS ux_equipment_repair_document ON equipment_repair_document (repair_id, document_id);
+
+  - changeSet:
+      id: 019-equipment-repair-lines
+      author: system
+      changes:
+        - createTable:
+            tableName: equipment_repair_line
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: repair_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: kind, type: VARCHAR(32), constraints: { nullable: false } } # LABOR, PART
+              - column: { name: description, type: VARCHAR(512), constraints: { nullable: false } }
+              - column: { name: quantity, type: NUMERIC(18,3), constraints: { nullable: false } }
+              - column: { name: uom, type: VARCHAR(16) }
+              - column: { name: unit_cost, type: NUMERIC(18,2) }
+              - column: { name: total_cost, type: NUMERIC(18,2) }
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+        - addForeignKeyConstraint:
+            baseTableName: equipment_repair_line
+            baseColumnNames: repair_id
+            referencedTableName: equipment_repair_order
+            referencedColumnNames: id
+            constraintName: fk_equipment_repair_line_repair
+            onDelete: CASCADE
+        - createIndex:
+            indexName: idx_equipment_repair_line_repair
+            tableName: equipment_repair_line
+            columns:
+              - column: { name: repair_id }

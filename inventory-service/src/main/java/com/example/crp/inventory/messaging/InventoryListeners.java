@@ -12,11 +12,14 @@ import java.util.List;
 public class InventoryListeners {
     private final InvalidMessageRouter invalidRouter;
     private final InventoryReservationService reservationService;
+    private final com.example.crp.inventory.service.InboundReceiptIngestionService receiptIngestionService;
 
     public InventoryListeners(InvalidMessageRouter invalidRouter,
-                              InventoryReservationService reservationService) {
+                              InventoryReservationService reservationService,
+                              com.example.crp.inventory.service.InboundReceiptIngestionService receiptIngestionService) {
         this.invalidRouter = invalidRouter;
         this.reservationService = reservationService;
+        this.receiptIngestionService = receiptIngestionService;
     }
 
     @KafkaListener(topics = "procurement.approved", groupId = "inventory")
@@ -57,6 +60,27 @@ public class InventoryListeners {
                 reservationService.releaseFromProcurementReject(msg);
             } catch (Exception ex) {
                 invalidRouter.routeInvalid("procurement.rejected.invalid", key, rec.value(), ex.getMessage());
+            }
+        }
+    }
+
+    @KafkaListener(topics = "procurement.goods_accepted", groupId = "inventory")
+    public void onGoodsAccepted(List<ConsumerRecord<String, Events.GoodsReceiptAccepted>> records) {
+        for (ConsumerRecord<String, Events.GoodsReceiptAccepted> rec : records) {
+            String key = rec.key();
+            if (invalidRouter.isMarkedInvalid(key)) {
+                invalidRouter.routeInvalid("procurement.goods_accepted.invalid", key, rec.value(), "key previously invalid");
+                continue;
+            }
+            Events.GoodsReceiptAccepted msg = rec.value();
+            if (msg == null || msg.receiptId() == null) {
+                invalidRouter.routeInvalid("procurement.goods_accepted.invalid", key, rec.value(), "missing receiptId");
+                continue;
+            }
+            try {
+                receiptIngestionService.ingest(msg);
+            } catch (Exception ex) {
+                invalidRouter.routeInvalid("procurement.goods_accepted.invalid", key, rec.value(), ex.getMessage());
             }
         }
     }

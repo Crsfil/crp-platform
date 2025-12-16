@@ -34,4 +34,24 @@ public class ReportsController {
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(data);
     }
+
+    @GetMapping("/procurement-pipeline.xlsx")
+    @PreAuthorize("hasAuthority('REPORTS_READ') or hasRole('ADMIN')")
+    public ResponseEntity<byte[]> procurementPipeline() {
+        byte[] data = generator.procurementPipelineXlsx();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=procurement-pipeline.xlsx")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(data);
+    }
+
+    @GetMapping("/supplier-spend.xlsx")
+    @PreAuthorize("hasAuthority('REPORTS_READ') or hasRole('ADMIN')")
+    public ResponseEntity<byte[]> supplierSpend() {
+        byte[] data = generator.supplierSpendXlsx();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=supplier-spend.xlsx")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(data);
+    }
 }

@@ -38,3 +38,209 @@ databaseChangeLog:
                   name: status
               - column:
                   name: created_at
+  - changeSet:
+      id: 003-request-extended
+      author: system
+      changes:
+        - addColumn:
+            tableName: procurement_request
+            columns:
+              - column: { name: version, type: BIGINT, defaultValueNumeric: 0, constraints: { nullable: false } }
+              - column: { name: request_number, type: VARCHAR(64) }
+              - column: { name: title, type: VARCHAR(256) }
+              - column: { name: kind, type: VARCHAR(32), defaultValue: PURCHASE, constraints: { nullable: false } }
+              - column: { name: currency, type: VARCHAR(8), defaultValue: RUB }
+              - column: { name: cost_center, type: VARCHAR(64) }
+              - column: { name: need_by_date, type: DATE }
+              - column: { name: approved_at, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: approved_by, type: VARCHAR(128) }
+  - changeSet:
+      id: 004-request-lines
+      author: system
+      changes:
+        - createTable:
+            tableName: procurement_request_line
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: request_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: description, type: VARCHAR(512), constraints: { nullable: false } }
+              - column: { name: quantity, type: NUMERIC(19,3), constraints: { nullable: false } }
+              - column: { name: uom, type: VARCHAR(32), constraints: { nullable: false } }
+              - column: { name: unit_price, type: NUMERIC(19,2) }
+              - column: { name: need_by_date, type: DATE }
+        - addForeignKeyConstraint:
+            baseTableName: procurement_request_line
+            baseColumnNames: request_id
+            referencedTableName: procurement_request
+            referencedColumnNames: id
+            constraintName: fk_pr_line_request
+            onDelete: CASCADE
+        - createIndex:
+            indexName: idx_pr_line_request
+            tableName: procurement_request_line
+            columns:
+              - column: { name: request_id }
+  - changeSet:
+      id: 005-suppliers
+      author: system
+      changes:
+        - createTable:
+            tableName: supplier
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: version, type: BIGINT, defaultValueNumeric: 0, constraints: { nullable: false } }
+              - column: { name: name, type: VARCHAR(256), constraints: { nullable: false } }
+              - column: { name: inn, type: VARCHAR(16) }
+              - column: { name: kpp, type: VARCHAR(16) }
+              - column: { name: email, type: VARCHAR(256) }
+              - column: { name: status, type: VARCHAR(32), defaultValue: ACTIVE, constraints: { nullable: false } }
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+        - createIndex:
+            indexName: ux_supplier_inn
+            tableName: supplier
+            unique: true
+            columns:
+              - column: { name: inn }
+  - changeSet:
+      id: 006-purchase-order
+      author: system
+      changes:
+        - createTable:
+            tableName: purchase_order
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: version, type: BIGINT, defaultValueNumeric: 0, constraints: { nullable: false } }
+              - column: { name: request_id, type: BIGINT }
+              - column: { name: supplier_id, type: BIGINT }
+              - column: { name: status, type: VARCHAR(32), defaultValue: DRAFT, constraints: { nullable: false } }
+              - column: { name: total_amount, type: NUMERIC(19,2) }
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+        - addForeignKeyConstraint:
+            baseTableName: purchase_order
+            baseColumnNames: request_id
+            referencedTableName: procurement_request
+            referencedColumnNames: id
+            constraintName: fk_po_request
+            onDelete: SET NULL
+        - addForeignKeyConstraint:
+            baseTableName: purchase_order
+            baseColumnNames: supplier_id
+            referencedTableName: supplier
+            referencedColumnNames: id
+            constraintName: fk_po_supplier
+            onDelete: SET NULL
+        - createIndex:
+            indexName: idx_po_request
+            tableName: purchase_order
+            columns:
+              - column: { name: request_id }
+  - changeSet:
+      id: 007-purchase-order-lines
+      author: system
+      changes:
+        - createTable:
+            tableName: purchase_order_line
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: purchase_order_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: request_line_id, type: BIGINT }
+              - column: { name: description, type: VARCHAR(512), constraints: { nullable: false } }
+              - column: { name: quantity_ordered, type: NUMERIC(19,3), constraints: { nullable: false } }
+              - column: { name: quantity_received, type: NUMERIC(19,3), defaultValueNumeric: 0, constraints: { nullable: false } }
+              - column: { name: unit_price, type: NUMERIC(19,2) }
+        - addForeignKeyConstraint:
+            baseTableName: purchase_order_line
+            baseColumnNames: purchase_order_id
+            referencedTableName: purchase_order
+            referencedColumnNames: id
+            constraintName: fk_pol_po
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: purchase_order_line
+            baseColumnNames: request_line_id
+            referencedTableName: procurement_request_line
+            referencedColumnNames: id
+            constraintName: fk_pol_prl
+            onDelete: SET NULL
+        - createIndex:
+            indexName: idx_pol_po
+            tableName: purchase_order_line
+            columns:
+              - column: { name: purchase_order_id }
+  - changeSet:
+      id: 008-goods-receipt
+      author: system
+      changes:
+        - createTable:
+            tableName: goods_receipt
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: purchase_order_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: status, type: VARCHAR(32), defaultValue: RECEIVED, constraints: { nullable: false } }
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+        - addForeignKeyConstraint:
+            baseTableName: goods_receipt
+            baseColumnNames: purchase_order_id
+            referencedTableName: purchase_order
+            referencedColumnNames: id
+            constraintName: fk_gr_po
+            onDelete: CASCADE
+        - createIndex:
+            indexName: idx_gr_po
+            tableName: goods_receipt
+            columns:
+              - column: { name: purchase_order_id }
+  - changeSet:
+      id: 009-goods-receipt-lines
+      author: system
+      changes:
+        - createTable:
+            tableName: goods_receipt_line
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: receipt_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: purchase_order_line_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: quantity_received, type: NUMERIC(19,3), constraints: { nullable: false } }
+        - addForeignKeyConstraint:
+            baseTableName: goods_receipt_line
+            baseColumnNames: receipt_id
+            referencedTableName: goods_receipt
+            referencedColumnNames: id
+            constraintName: fk_grl_gr
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: goods_receipt_line
+            baseColumnNames: purchase_order_line_id
+            referencedTableName: purchase_order_line
+            referencedColumnNames: id
+            constraintName: fk_grl_pol
+            onDelete: CASCADE
+        - createIndex:
+            indexName: idx_grl_receipt
+            tableName: goods_receipt_line
+            columns:
+              - column: { name: receipt_id }
+  - changeSet:
+      id: 010-procurement-attachments
+      author: system
+      changes:
+        - createTable:
+            tableName: procurement_attachment
+            columns:
+              - column: { name: id, type: UUID, constraints: { primaryKey: true } }
+              - column: { name: owner_type, type: VARCHAR(32), constraints: { nullable: false } }
+              - column: { name: owner_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: file_name, type: VARCHAR(256), constraints: { nullable: false } }
+              - column: { name: content_type, type: VARCHAR(128) }
+              - column: { name: file_size, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: sha256, type: VARCHAR(64), constraints: { nullable: false } }
+              - column: { name: storage_type, type: VARCHAR(32), constraints: { nullable: false } }
+              - column: { name: storage_location, type: VARCHAR(1024), constraints: { nullable: false } }
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+              - column: { name: created_by, type: VARCHAR(128) }
+        - createIndex:
+            indexName: idx_proc_attach_owner
+            tableName: procurement_attachment
+            columns:
+              - column: { name: owner_type }
+              - column: { name: owner_id }

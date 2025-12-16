@@ -1,2 +1,3 @@
 com.example.crp.security.JwtAudienceAutoConfiguration
 com.example.crp.security.CorrelationIdAutoConfiguration
+com.example.crp.security.TrustedClientsAutoConfiguration

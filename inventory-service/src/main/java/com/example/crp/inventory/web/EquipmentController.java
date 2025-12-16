@@ -19,6 +19,7 @@ public class EquipmentController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('INVENTORY_READ') or hasRole('ADMIN') or @trustedClientAuthorizer.isTrusted(authentication)")
     public List<Equipment> list() { return repository.findAll(); }
 
     @PostMapping
@@ -30,6 +31,10 @@ public class EquipmentController {
             return org.springframework.http.ResponseEntity.badRequest().build();
         }
         Equipment saved = repository.save(e);
+        if (saved.getInventoryNumber() == null || saved.getInventoryNumber().isBlank()) {
+            saved.setInventoryNumber("INV-" + saved.getId());
+            saved = repository.save(saved);
+        }
         return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(saved);
     }
 

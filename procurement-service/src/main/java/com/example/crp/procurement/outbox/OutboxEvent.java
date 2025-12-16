@@ -34,8 +34,7 @@ public class OutboxEvent {
     @Column(nullable = false)
     private String status;
 
-    @Column(nullable = false)
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
     @Column(name = "retry_count")

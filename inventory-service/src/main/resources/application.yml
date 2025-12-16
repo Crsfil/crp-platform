@@ -50,5 +50,26 @@ security:
 
 crp:
   security:
+    trusted-clients: ${CRP_TRUSTED_CLIENTS:reports-service}
     jwt:
       enforce-audience: true
+
+inventory:
+  documents:
+    storage:
+      type: ${INVENTORY_DOCS_STORAGE_TYPE:filesystem}
+      filesystem:
+        base-dir: ${INVENTORY_DOCS_FS_BASE_DIR:}
+      s3:
+        endpoint: ${INVENTORY_S3_ENDPOINT:}
+        region: ${INVENTORY_S3_REGION:us-east-1}
+        bucket: ${INVENTORY_S3_BUCKET:crp-inventory}
+        access-key: ${INVENTORY_S3_ACCESS_KEY:}
+        secret-key: ${INVENTORY_S3_SECRET_KEY:}
+        path-style-access: ${INVENTORY_S3_PATH_STYLE_ACCESS:true}
+        presign-ttl: ${INVENTORY_S3_PRESIGN_TTL:PT15M}
+
+  security:
+    location-abac:
+      enabled: ${INVENTORY_LOCATION_ABAC_ENABLED:false}
+      region-claim: ${INVENTORY_LOCATION_ABAC_REGION_CLAIM:region}

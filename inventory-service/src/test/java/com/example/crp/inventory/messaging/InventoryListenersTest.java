@@ -1,12 +1,14 @@
 package com.example.crp.inventory.messaging;
 
 import com.example.crp.inventory.service.InventoryReservationService;
+import com.example.crp.inventory.service.InboundReceiptIngestionService;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -19,11 +21,13 @@ class InventoryListenersTest {
     private InvalidMessageRouter invalidRouter;
     @Mock
     private InventoryReservationService reservationService;
+    @Mock
+    private InboundReceiptIngestionService receiptIngestionService;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        inventoryListeners = new InventoryListeners(invalidRouter, reservationService);
+        inventoryListeners = new InventoryListeners(invalidRouter, reservationService, receiptIngestionService);
     }
 
     @Test
@@ -57,5 +61,19 @@ class InventoryListenersTest {
 
         verify(reservationService).releaseFromProcurementReject(eq(msg));
         verify(invalidRouter, never()).routeInvalid(eq("procurement.rejected.invalid"), any(), any(), any());
+    }
+
+    @Test
+    void onGoodsAccepted_routesToService() {
+        Events.GoodsReceiptAccepted msg = new Events.GoodsReceiptAccepted(
+                10L, 20L, 30L, 40L,
+                List.of(new Events.GoodsReceiptItem(100L, 200L, "Excavator", BigDecimal.ONE, "PCS", BigDecimal.TEN))
+        );
+        when(invalidRouter.isMarkedInvalid("k3")).thenReturn(false);
+
+        inventoryListeners.onGoodsAccepted(List.of(new ConsumerRecord<>("procurement.goods_accepted", 0, 0L, "k3", msg)));
+
+        verify(receiptIngestionService).ingest(eq(msg));
+        verify(invalidRouter, never()).routeInvalid(eq("procurement.goods_accepted.invalid"), any(), any(), any());
     }
 }

@@ -42,6 +42,18 @@ inventory:
 procurement:
   base-url: ${PROCUREMENT_BASE_URL:http://procurement-service:8083}
 
+reports:
+  storage:
+    type: ${REPORTS_STORAGE_TYPE:filesystem}
+    s3:
+      endpoint: ${REPORTS_S3_ENDPOINT:}
+      region: ${REPORTS_S3_REGION:us-east-1}
+      bucket: ${REPORTS_S3_BUCKET:crp-reports}
+      access-key: ${REPORTS_S3_ACCESS_KEY:}
+      secret-key: ${REPORTS_S3_SECRET_KEY:}
+      path-style-access: ${REPORTS_S3_PATH_STYLE_ACCESS:true}
+      presign-ttl: ${REPORTS_S3_PRESIGN_TTL:PT15M}
+
 crp:
   security:
     jwt:

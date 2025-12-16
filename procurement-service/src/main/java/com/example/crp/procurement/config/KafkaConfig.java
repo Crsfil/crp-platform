@@ -11,8 +11,11 @@ public class KafkaConfig {
     @Bean public NewTopic topicRequested(){ return new NewTopic("procurement.requested",1,(short)1);} 
     @Bean public NewTopic topicApproved(){ return new NewTopic("procurement.approved",1,(short)1);} 
     @Bean public NewTopic topicRejected(){ return new NewTopic("procurement.rejected",1,(short)1);} 
+    @Bean public NewTopic topicPoCreated(){ return new NewTopic("procurement.po_created",1,(short)1);} 
+    @Bean public NewTopic topicPoSent(){ return new NewTopic("procurement.po_sent",1,(short)1);} 
+    @Bean public NewTopic topicGoodsReceived(){ return new NewTopic("procurement.goods_received",1,(short)1);} 
+    @Bean public NewTopic topicGoodsAccepted(){ return new NewTopic("procurement.goods_accepted",1,(short)1);} 
     @Bean public NewTopic topicInvReserved(){ return new NewTopic("inventory.reserved",1,(short)1);} 
     @Bean public NewTopic topicInvReserveFailed(){ return new NewTopic("inventory.reserve_failed",1,(short)1);} 
     @Bean public NewTopic topicInvReleased(){ return new NewTopic("inventory.released",1,(short)1);} 
 }
-

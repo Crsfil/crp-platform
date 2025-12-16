@@ -62,8 +62,22 @@ security:
 
 crp:
   security:
+    trusted-clients: ${CRP_TRUSTED_CLIENTS:reports-service}
     jwt:
       enforce-audience: true
 outbox:
   procurement:
     poll-ms: 2000
+
+procurement:
+  attachments:
+    storage:
+      type: ${PROCUREMENT_ATTACHMENTS_STORAGE_TYPE:filesystem}
+      s3:
+        endpoint: ${PROCUREMENT_S3_ENDPOINT:}
+        region: ${PROCUREMENT_S3_REGION:us-east-1}
+        bucket: ${PROCUREMENT_S3_BUCKET:crp-procurement}
+        access-key: ${PROCUREMENT_S3_ACCESS_KEY:}
+        secret-key: ${PROCUREMENT_S3_SECRET_KEY:}
+        path-style-access: ${PROCUREMENT_S3_PATH_STYLE_ACCESS:true}
+        presign-ttl: ${PROCUREMENT_S3_PRESIGN_TTL:PT15M}
