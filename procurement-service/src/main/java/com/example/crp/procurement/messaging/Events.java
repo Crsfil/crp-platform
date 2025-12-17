@@ -26,4 +26,28 @@ public class Events {
                                    BigDecimal quantityReceived,
                                    String uom,
                                    BigDecimal unitPrice) {}
+
+    public record ProcurementRfqCreated(Long rfqId,
+                                         String serviceType,
+                                         Long equipmentId,
+                                         Long locationId) {}
+
+    public record ProcurementRfqAwarded(Long rfqId,
+                                        Long supplierId,
+                                        String reason) {}
+
+    public record ProcurementServiceCreated(Long serviceOrderId,
+                                            String serviceType,
+                                            Long equipmentId,
+                                            Long locationId,
+                                            Long supplierId) {}
+
+    public record ProcurementServiceCompleted(Long serviceOrderId,
+                                              String serviceType,
+                                              Long equipmentId,
+                                              Long locationId,
+                                              Long supplierId,
+                                              BigDecimal actualCost,
+                                              java.util.UUID actDocumentId,
+                                              java.time.OffsetDateTime completedAt) {}
 }

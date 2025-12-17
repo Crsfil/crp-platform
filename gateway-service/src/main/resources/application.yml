@@ -5,6 +5,11 @@ spring:
     name: gateway-service
   main:
     web-application-type: reactive
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:${SECURITY_JWT_ISSUER:http://keycloak:8080/realms/crp}}
   data:
     redis:
       host: ${REDIS_HOST:redis}
@@ -18,6 +23,22 @@ management:
 gateway:
   idempotency:
     ttl: ${GATEWAY_IDEMPOTENCY_TTL:PT24H}
+  security:
+    enabled: ${GATEWAY_SECURITY_ENABLED:true}
+    mfa:
+      claim: ${GATEWAY_MFA_CLAIM:amr}
+      value: ${GATEWAY_MFA_VALUE:otp}
+      admin-bypass: ${GATEWAY_MFA_ADMIN_BYPASS:true}
+      paths:
+        - /procurement/service/orders/**/complete
+        - /procurement/service/rfq/**/award
+    abac:
+      required-claims: ${GATEWAY_ABAC_REQUIRED_CLAIMS:region,branch}
+      admin-bypass: ${GATEWAY_ABAC_ADMIN_BYPASS:true}
+      paths:
+        - /inventory/**
+        - /procurement/**
+        - /reports/**
 
 bff:
   issuer: ${BFF_ISSUER:http://keycloak:8080/realms/crp}

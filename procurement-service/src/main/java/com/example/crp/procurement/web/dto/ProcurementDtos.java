@@ -165,4 +165,93 @@ public class ProcurementDtos {
             OffsetDateTime createdAt,
             String createdBy
     ) {}
+
+    public record CreateRfq(
+            @NotBlank String serviceType,
+            Long requestId,
+            Long equipmentId,
+            Long locationId,
+            String title,
+            List<Long> supplierIds
+    ) {}
+
+    public record RfqDto(
+            Long id,
+            String serviceType,
+            Long requestId,
+            Long equipmentId,
+            Long locationId,
+            String title,
+            String status,
+            Long awardedSupplierId,
+            String awardReason,
+            OffsetDateTime createdAt,
+            String createdBy,
+            List<RfqOfferDto> offers
+    ) {}
+
+    public record CreateRfqOffer(
+            @NotNull Long supplierId,
+            @NotNull BigDecimal price,
+            @NotBlank String currency,
+            Integer etaDays,
+            OffsetDateTime validUntil
+    ) {}
+
+    public record RfqOfferDto(
+            Long id,
+            Long rfqId,
+            Long supplierId,
+            BigDecimal price,
+            String currency,
+            Integer etaDays,
+            OffsetDateTime validUntil,
+            String status,
+            OffsetDateTime createdAt
+    ) {}
+
+    public record AwardRfq(
+            @NotNull Long supplierId,
+            String reason
+    ) {}
+
+    public record CreateServiceOrder(
+            @NotNull String serviceType,
+            Long requestId,
+            Long equipmentId,
+            Long locationId,
+            Long supplierId,
+            String vendorName,
+            String vendorInn,
+            OffsetDateTime slaUntil,
+            BigDecimal plannedCost,
+            String currency,
+            String note
+    ) {}
+
+    public record CompleteServiceOrder(
+            BigDecimal actualCost,
+            OffsetDateTime completedAt,
+            UUID actDocumentId
+    ) {}
+
+    public record ServiceOrderDto(
+            Long id,
+            String serviceType,
+            Long requestId,
+            Long equipmentId,
+            Long locationId,
+            Long supplierId,
+            String vendorName,
+            String vendorInn,
+            String status,
+            OffsetDateTime slaUntil,
+            BigDecimal plannedCost,
+            BigDecimal actualCost,
+            String currency,
+            OffsetDateTime createdAt,
+            OffsetDateTime updatedAt,
+            UUID actDocumentId,
+            String note
+    ) {}
 }

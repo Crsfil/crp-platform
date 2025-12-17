@@ -53,6 +53,24 @@ public class Equipment {
     @Column(name = "source_request_line_id")
     private Long sourceRequestLineId;
 
+    @Column(name = "branch_code")
+    private String branchCode;
+
+    @Column(name = "current_custodian")
+    private String currentCustodian;
+
+    @Column(name = "repossession_case_id")
+    private Long repossessionCaseId;
+
+    @Column(name = "valuation_amount")
+    private java.math.BigDecimal valuationAmount;
+
+    @Column(name = "valuation_currency")
+    private String valuationCurrency;
+
+    @Column(name = "valuation_at")
+    private OffsetDateTime valuationAt;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public Long getVersion() { return version; }
@@ -92,6 +110,18 @@ public class Equipment {
     public void setSourcePurchaseOrderLineId(Long sourcePurchaseOrderLineId) { this.sourcePurchaseOrderLineId = sourcePurchaseOrderLineId; }
     public Long getSourceRequestLineId() { return sourceRequestLineId; }
     public void setSourceRequestLineId(Long sourceRequestLineId) { this.sourceRequestLineId = sourceRequestLineId; }
+    public String getBranchCode() { return branchCode; }
+    public void setBranchCode(String branchCode) { this.branchCode = branchCode; }
+    public String getCurrentCustodian() { return currentCustodian; }
+    public void setCurrentCustodian(String currentCustodian) { this.currentCustodian = currentCustodian; }
+    public Long getRepossessionCaseId() { return repossessionCaseId; }
+    public void setRepossessionCaseId(Long repossessionCaseId) { this.repossessionCaseId = repossessionCaseId; }
+    public java.math.BigDecimal getValuationAmount() { return valuationAmount; }
+    public void setValuationAmount(java.math.BigDecimal valuationAmount) { this.valuationAmount = valuationAmount; }
+    public String getValuationCurrency() { return valuationCurrency; }
+    public void setValuationCurrency(String valuationCurrency) { this.valuationCurrency = valuationCurrency; }
+    public OffsetDateTime getValuationAt() { return valuationAt; }
+    public void setValuationAt(OffsetDateTime valuationAt) { this.valuationAt = valuationAt; }
 
     @PrePersist
     public void prePersist() {

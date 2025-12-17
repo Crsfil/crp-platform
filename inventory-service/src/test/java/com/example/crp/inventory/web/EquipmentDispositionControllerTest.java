@@ -4,6 +4,7 @@ import com.example.crp.inventory.domain.EquipmentDisposition;
 import com.example.crp.inventory.repo.EquipmentRepository;
 import com.example.crp.inventory.service.EquipmentDispositionDocumentsService;
 import com.example.crp.inventory.service.EquipmentDispositionService;
+import com.example.crp.inventory.security.MfaPolicy;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,11 +39,15 @@ class EquipmentDispositionControllerTest {
     @MockBean
     private EquipmentDispositionDocumentsService documentsService;
 
+    @MockBean
+    private MfaPolicy mfaPolicy;
+
     private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
+        when(mfaPolicy.isSatisfied(any())).thenReturn(true);
     }
 
     @Test

@@ -6,6 +6,9 @@ services:
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HOSTNAME_URL: http://keycloak:8080
+      KC_HOSTNAME_ADMIN_URL: http://keycloak:8080
+      KC_HOSTNAME_STRICT: "false"
     ports:
       - "18080:8080"
     volumes:
@@ -78,7 +81,7 @@ services:
       - minio_data:/data
 
   minio-init:
-    image: minio/mc:RELEASE.2024-10-11T16-43-26Z
+    image: minio/mc:RELEASE.2024-06-12T14-34-03Z
     depends_on:
       - minio
     environment:
@@ -468,6 +471,8 @@ services:
     image: prom/prometheus:latest
     volumes:
       - ./infrastructure/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infrastructure/observability/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - ./infrastructure/observability/slo.yml:/etc/prometheus/slo.yml:ro
     ports:
       - "9090:9090"
 

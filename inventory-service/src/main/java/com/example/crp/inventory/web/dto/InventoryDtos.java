@@ -301,4 +301,92 @@ public class InventoryDtos {
             java.math.BigDecimal totalCost,
             OffsetDateTime createdAt
     ) {}
+
+    public record CreateRepossessionCase(
+            String triggerReason,
+            String decisionRef,
+            Long targetLocationId
+    ) {}
+
+    public record RepossessionCaseDto(
+            Long id,
+            Long equipmentId,
+            String status,
+            String triggerReason,
+            String decisionRef,
+            Long targetLocationId,
+            String initiatedBy,
+            OffsetDateTime initiatedAt,
+            OffsetDateTime createdAt,
+            OffsetDateTime updatedAt,
+            String correlationId
+    ) {}
+
+      public record CreateStorageOrder(
+              @NotNull Long storageLocationId,
+              String vendorName,
+              String vendorInn,
+              OffsetDateTime slaUntil,
+              java.math.BigDecimal expectedCost,
+              String currency,
+              Long procurementServiceOrderId,
+              String note
+      ) {}
+
+    public record StorageOrderDto(
+            Long id,
+            Long equipmentId,
+            Long storageLocationId,
+            String status,
+            String vendorName,
+            String vendorInn,
+            OffsetDateTime slaUntil,
+            OffsetDateTime startedAt,
+            OffsetDateTime releasedAt,
+            java.math.BigDecimal expectedCost,
+            java.math.BigDecimal actualCost,
+            String currency,
+            Long procurementServiceOrderId,
+            String note,
+            String createdBy,
+            OffsetDateTime createdAt,
+            OffsetDateTime updatedAt,
+            String correlationId
+    ) {}
+
+    public record CreateValuation(
+            java.math.BigDecimal valuationAmount,
+            java.math.BigDecimal liquidationAmount,
+            String currency,
+            OffsetDateTime valuatedAt,
+            String vendorName,
+            String vendorInn,
+            String note
+    ) {}
+
+    public record ValuationDto(
+            Long id,
+            Long equipmentId,
+            java.math.BigDecimal valuationAmount,
+            java.math.BigDecimal liquidationAmount,
+            String currency,
+            OffsetDateTime valuatedAt,
+            String vendorName,
+            String vendorInn,
+            String note,
+            String createdBy,
+            OffsetDateTime createdAt,
+            OffsetDateTime updatedAt,
+            String correlationId
+    ) {}
+
+    public record CustodyDto(
+            Long id,
+            Long equipmentId,
+            Long locationId,
+            String custodian,
+            OffsetDateTime fromTs,
+            OffsetDateTime toTs,
+            String reason
+    ) {}
 }

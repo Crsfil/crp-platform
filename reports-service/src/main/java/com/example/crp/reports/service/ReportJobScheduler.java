@@ -90,6 +90,42 @@ public class ReportJobScheduler {
         return job;
     }
 
+    public ReportJob scheduleRepossessedPortfolioReport() {
+        ReportJob job = new ReportJob();
+        job.setType("REPOSSESSED_PORTFOLIO_XLSX");
+        job.setStatus("PENDING");
+        job.setSnapshotTimestamp(java.time.OffsetDateTime.now());
+        job.setTemplateId("repossessed-portfolio");
+        job.setDatasetVersion("v1");
+        reportJobRepository.save(job);
+        scheduleQuartzJob(job.getId());
+        return job;
+    }
+
+    public ReportJob scheduleStorageCostsReport() {
+        ReportJob job = new ReportJob();
+        job.setType("STORAGE_COSTS_XLSX");
+        job.setStatus("PENDING");
+        job.setSnapshotTimestamp(java.time.OffsetDateTime.now());
+        job.setTemplateId("storage-costs");
+        job.setDatasetVersion("v1");
+        reportJobRepository.save(job);
+        scheduleQuartzJob(job.getId());
+        return job;
+    }
+
+    public ReportJob scheduleDispositionResultsReport() {
+        ReportJob job = new ReportJob();
+        job.setType("DISPOSITION_RESULTS_XLSX");
+        job.setStatus("PENDING");
+        job.setSnapshotTimestamp(java.time.OffsetDateTime.now());
+        job.setTemplateId("disposition-results");
+        job.setDatasetVersion("v1");
+        reportJobRepository.save(job);
+        scheduleQuartzJob(job.getId());
+        return job;
+    }
+
     private void scheduleQuartzJob(Long jobId) {
         try {
             JobDetail detail = JobBuilder.newJob(HeavyReportJobExecutor.class)

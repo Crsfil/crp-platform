@@ -77,6 +77,24 @@ public class ReportJobsController {
         return scheduler.scheduleSupplierSpendReport();
     }
 
+    @PostMapping("/repossessed-portfolio")
+    @PreAuthorize("hasAuthority('REPORTS_READ') or hasRole('ADMIN')")
+    public ReportJob createRepossessedPortfolioJob() {
+        return scheduler.scheduleRepossessedPortfolioReport();
+    }
+
+    @PostMapping("/storage-costs")
+    @PreAuthorize("hasAuthority('REPORTS_READ') or hasRole('ADMIN')")
+    public ReportJob createStorageCostsJob() {
+        return scheduler.scheduleStorageCostsReport();
+    }
+
+    @PostMapping("/disposition-results")
+    @PreAuthorize("hasAuthority('REPORTS_READ') or hasRole('ADMIN')")
+    public ReportJob createDispositionResultsJob() {
+        return scheduler.scheduleDispositionResultsReport();
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('REPORTS_READ') or hasRole('ADMIN')")
     public ResponseEntity<ReportJob> getJob(@PathVariable Long id) {

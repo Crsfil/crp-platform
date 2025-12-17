@@ -11,7 +11,13 @@ public class SecurityConfig {
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .authorizeExchange(ex -> ex.anyExchange().permitAll())
+                .authorizeExchange(ex -> ex
+                        .pathMatchers("/actuator/**", "/bff/**", "/auth/**", "/oidc/**", "/swagger/**", "/swagger-ui/**", "/v3/api-docs/**")
+                        .permitAll()
+                        .anyExchange()
+                        .authenticated()
+                )
+                .oauth2ResourceServer(ServerHttpSecurity.OAuth2ResourceServerSpec::jwt)
                 .build();
     }
 }

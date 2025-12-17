@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: "crp-dashboards"
+    orgId: 1
+    folder: "CRP"
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards

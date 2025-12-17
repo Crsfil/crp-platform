@@ -461,6 +461,162 @@ public class ReportGenerator {
         }
     }
 
+    public byte[] repossessedPortfolioXlsx() {
+        List<Map<String, Object>> equipment = inventoryClient.get().uri("/equipment")
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(List.class)
+                .block();
+        var statuses = List.of("REPOSSESSION_PENDING", "IN_TRANSIT", "IN_STORAGE", "UNDER_EVALUATION", "UNDER_REPAIR", "SALE_LISTED", "REPOSSESSED");
+        try (var wb = new XSSFWorkbook(); var out = new ByteArrayOutputStream()) {
+            Sheet sheet = wb.createSheet("Repossessed");
+            int r = 0;
+            Row header = sheet.createRow(r++);
+            header.createCell(0).setCellValue("ID");
+            header.createCell(1).setCellValue("STATUS");
+            header.createCell(2).setCellValue("TYPE");
+            header.createCell(3).setCellValue("MODEL");
+            header.createCell(4).setCellValue("BRANCH");
+            header.createCell(5).setCellValue("CUSTODIAN");
+            header.createCell(6).setCellValue("VALUATION");
+            header.createCell(7).setCellValue("VALUATION_AT");
+            if (equipment != null) {
+                for (Object o : equipment) {
+                    Map<?,?> m = (Map<?,?>) o;
+                    String st = s(m.get("status")).toUpperCase();
+                    if (!statuses.contains(st)) continue;
+                    Row row = sheet.createRow(r++);
+                    row.createCell(0).setCellValue(s(m.get("id")));
+                    row.createCell(1).setCellValue(st);
+                    row.createCell(2).setCellValue(s(m.get("type")));
+                    row.createCell(3).setCellValue(s(m.get("model")));
+                    row.createCell(4).setCellValue(s(m.get("branchCode")));
+                    row.createCell(5).setCellValue(s(m.get("currentCustodian")));
+                    row.createCell(6).setCellValue(s(m.get("valuationAmount")));
+                    row.createCell(7).setCellValue(s(m.get("valuationAt")));
+                }
+            }
+            wb.write(out);
+            return out.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public byte[] storageCostsXlsx() {
+        List<Map<String, Object>> orders = procurementClient.get().uri("/service/orders")
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(List.class)
+                .block();
+        try (var wb = new XSSFWorkbook(); var out = new ByteArrayOutputStream()) {
+            Sheet sheet = wb.createSheet("StorageCosts");
+            int r = 0;
+            Row header = sheet.createRow(r++);
+            header.createCell(0).setCellValue("ORDER_ID");
+            header.createCell(1).setCellValue("EQUIPMENT_ID");
+            header.createCell(2).setCellValue("SERVICE_TYPE");
+            header.createCell(3).setCellValue("LOCATION_ID");
+            header.createCell(4).setCellValue("STATUS");
+            header.createCell(5).setCellValue("PLANNED_COST");
+            header.createCell(6).setCellValue("ACTUAL_COST");
+            header.createCell(7).setCellValue("CURRENCY");
+            header.createCell(8).setCellValue("SLA_UNTIL");
+            if (orders != null) {
+                for (Object o : orders) {
+                    Map<?,?> m = (Map<?,?>) o;
+                    Row row = sheet.createRow(r++);
+                    row.createCell(0).setCellValue(s(m.get("id")));
+                    row.createCell(1).setCellValue(s(m.get("equipmentId")));
+                    row.createCell(2).setCellValue(s(m.get("serviceType")));
+                    row.createCell(3).setCellValue(s(m.get("locationId")));
+                    row.createCell(4).setCellValue(s(m.get("status")));
+                    row.createCell(5).setCellValue(s(m.get("plannedCost")));
+                    row.createCell(6).setCellValue(s(m.get("actualCost")));
+                    row.createCell(7).setCellValue(s(m.get("currency")));
+                    row.createCell(8).setCellValue(s(m.get("slaUntil")));
+                }
+            }
+            wb.write(out);
+            return out.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public byte[] dispositionResultsXlsx() {
+        List<Map<String, Object>> equipment = inventoryClient.get().uri("/equipment")
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(List.class)
+                .block();
+        try (var wb = new XSSFWorkbook(); var out = new ByteArrayOutputStream()) {
+            Sheet sheet = wb.createSheet("DispositionResults");
+            int r = 0;
+            Row header = sheet.createRow(r++);
+            header.createCell(0).setCellValue("DISPOSITION_ID");
+            header.createCell(1).setCellValue("EQUIPMENT_ID");
+            header.createCell(2).setCellValue("TYPE");
+            header.createCell(3).setCellValue("STATUS");
+            header.createCell(4).setCellValue("PLANNED_PRICE");
+            header.createCell(5).setCellValue("ACTUAL_PRICE");
+            header.createCell(6).setCellValue("CURRENCY");
+            header.createCell(7).setCellValue("COUNTERPARTY");
+            header.createCell(8).setCellValue("SALE_METHOD");
+            header.createCell(9).setCellValue("LOT_NUMBER");
+            header.createCell(10).setCellValue("CONTRACT_NUMBER");
+            header.createCell(11).setCellValue("INVOICE_NUMBER");
+            header.createCell(12).setCellValue("PAID_AT");
+            header.createCell(13).setCellValue("PERFORMED_AT");
+            header.createCell(14).setCellValue("LOCATION_ID");
+
+            if (equipment != null) {
+                for (Map<String, Object> e : equipment) {
+                    Long equipmentId = nLong(e.get("id"));
+                    if (equipmentId == null) {
+                        continue;
+                    }
+                    List<Map<String, Object>> dispositions;
+                    try {
+                        dispositions = inventoryClient.get()
+                                .uri("/equipment/{id}/dispositions", equipmentId)
+                                .accept(MediaType.APPLICATION_JSON)
+                                .retrieve()
+                                .bodyToMono(List.class)
+                                .block();
+                    } catch (Exception ex) {
+                        continue;
+                    }
+                    if (dispositions == null || dispositions.isEmpty()) {
+                        continue;
+                    }
+                    for (Map<String, Object> d : dispositions) {
+                        Row row = sheet.createRow(r++);
+                        row.createCell(0).setCellValue(s(d.get("id")));
+                        row.createCell(1).setCellValue(s(d.get("equipmentId")));
+                        row.createCell(2).setCellValue(s(d.get("type")));
+                        row.createCell(3).setCellValue(s(d.get("status")));
+                        row.createCell(4).setCellValue(s(d.get("plannedPrice")));
+                        row.createCell(5).setCellValue(s(d.get("actualPrice")));
+                        row.createCell(6).setCellValue(s(d.get("currency")));
+                        row.createCell(7).setCellValue(s(d.get("counterpartyName")));
+                        row.createCell(8).setCellValue(s(d.get("saleMethod")));
+                        row.createCell(9).setCellValue(s(d.get("lotNumber")));
+                        row.createCell(10).setCellValue(s(d.get("contractNumber")));
+                        row.createCell(11).setCellValue(s(d.get("invoiceNumber")));
+                        row.createCell(12).setCellValue(s(d.get("paidAt")));
+                        row.createCell(13).setCellValue(s(d.get("performedAt")));
+                        row.createCell(14).setCellValue(s(d.get("locationId")));
+                    }
+                }
+            }
+            wb.write(out);
+            return out.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private static Long nLong(Object o) {
         if (o == null) return null;
         if (o instanceof Number n) return n.longValue();

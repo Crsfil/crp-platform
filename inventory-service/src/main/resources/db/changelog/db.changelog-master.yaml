@@ -23,7 +23,7 @@ databaseChangeLog:
                   type: VARCHAR(64)
               - column:
                   name: price
-                  type: NUMERIC(19,2)
+                  type: "NUMERIC(19,2)"
               - column:
                   name: created_at
                   type: TIMESTAMP WITH TIME ZONE
@@ -444,8 +444,8 @@ databaseChangeLog:
               - column: { name: equipment_id, type: BIGINT, constraints: { nullable: false } }
               - column: { name: type, type: VARCHAR(32), constraints: { nullable: false } } # SALE, DISPOSAL
               - column: { name: status, type: VARCHAR(32), constraints: { nullable: false } } # DRAFT, APPROVED, COMPLETED, CANCELED
-              - column: { name: planned_price, type: NUMERIC(18,2) }
-              - column: { name: actual_price, type: NUMERIC(18,2) }
+              - column: { name: planned_price, type: "NUMERIC(18,2)" }
+              - column: { name: actual_price, type: "NUMERIC(18,2)" }
               - column: { name: currency, type: VARCHAR(3) }
               - column: { name: counterparty_name, type: VARCHAR(256) }
               - column: { name: counterparty_inn, type: VARCHAR(32) }
@@ -497,7 +497,7 @@ databaseChangeLog:
               - column: { name: inspected_at, type: TIMESTAMP WITH TIME ZONE }
               - column: { name: conclusion, type: VARCHAR(32) } # OK, DAMAGED, LOST
               - column: { name: recommended_action, type: VARCHAR(32) } # NONE, REPAIR, DISPOSITION
-              - column: { name: estimated_repair_cost, type: NUMERIC(18,2) }
+              - column: { name: estimated_repair_cost, type: "NUMERIC(18,2)" }
               - column: { name: summary, type: VARCHAR(512) }
               - column: { name: created_by, type: VARCHAR(128) }
               - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
@@ -537,7 +537,7 @@ databaseChangeLog:
               - column: { name: code, type: VARCHAR(64) }
               - column: { name: severity, type: VARCHAR(32) } # MINOR, MAJOR, CRITICAL
               - column: { name: description, type: VARCHAR(512) }
-              - column: { name: estimated_cost, type: NUMERIC(18,2) }
+              - column: { name: estimated_cost, type: "NUMERIC(18,2)" }
               - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
         - addForeignKeyConstraint:
             baseTableName: equipment_inspection_finding
@@ -637,8 +637,8 @@ databaseChangeLog:
               - column: { name: repair_location_id, type: BIGINT }
               - column: { name: vendor_name, type: VARCHAR(256) }
               - column: { name: vendor_inn, type: VARCHAR(32) }
-              - column: { name: planned_cost, type: NUMERIC(18,2) }
-              - column: { name: actual_cost, type: NUMERIC(18,2) }
+              - column: { name: planned_cost, type: "NUMERIC(18,2)" }
+              - column: { name: actual_cost, type: "NUMERIC(18,2)" }
               - column: { name: currency, type: VARCHAR(3) }
               - column: { name: started_at, type: TIMESTAMP WITH TIME ZONE }
               - column: { name: completed_at, type: TIMESTAMP WITH TIME ZONE }
@@ -716,10 +716,10 @@ databaseChangeLog:
               - column: { name: repair_id, type: BIGINT, constraints: { nullable: false } }
               - column: { name: kind, type: VARCHAR(32), constraints: { nullable: false } } # LABOR, PART
               - column: { name: description, type: VARCHAR(512), constraints: { nullable: false } }
-              - column: { name: quantity, type: NUMERIC(18,3), constraints: { nullable: false } }
+              - column: { name: quantity, type: "NUMERIC(18,3)", constraints: { nullable: false } }
               - column: { name: uom, type: VARCHAR(16) }
-              - column: { name: unit_cost, type: NUMERIC(18,2) }
-              - column: { name: total_cost, type: NUMERIC(18,2) }
+              - column: { name: unit_cost, type: "NUMERIC(18,2)" }
+              - column: { name: total_cost, type: "NUMERIC(18,2)" }
               - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
         - addForeignKeyConstraint:
             baseTableName: equipment_repair_line
@@ -733,3 +733,149 @@ databaseChangeLog:
             tableName: equipment_repair_line
             columns:
               - column: { name: repair_id }
+
+  - changeSet:
+      id: 020-repossession-storage-valuation
+      author: system
+      changes:
+        - addColumn:
+            tableName: equipment
+            columns:
+              - column: { name: branch_code, type: VARCHAR(64) }
+              - column: { name: current_custodian, type: VARCHAR(128) }
+              - column: { name: repossession_case_id, type: BIGINT }
+              - column: { name: valuation_amount, type: "NUMERIC(18,2)" }
+              - column: { name: valuation_currency, type: VARCHAR(3) }
+              - column: { name: valuation_at, type: TIMESTAMP WITH TIME ZONE }
+        - createTable:
+            tableName: equipment_repossession_case
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: equipment_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: status, type: VARCHAR(32), constraints: { nullable: false } }
+              - column: { name: trigger_reason, type: VARCHAR(256) }
+              - column: { name: decision_ref, type: VARCHAR(128) }
+              - column: { name: target_location_id, type: BIGINT }
+              - column: { name: initiated_by, type: VARCHAR(128) }
+              - column: { name: initiated_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+              - column: { name: updated_at, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: correlation_id, type: VARCHAR(64) }
+        - addForeignKeyConstraint:
+            baseTableName: equipment_repossession_case
+            baseColumnNames: equipment_id
+            referencedTableName: equipment
+            referencedColumnNames: id
+            constraintName: fk_equipment_repossession_equipment
+            onDelete: CASCADE
+        - createIndex:
+            indexName: idx_equipment_repossession_equipment
+            tableName: equipment_repossession_case
+            columns:
+              - column: { name: equipment_id }
+        - createTable:
+            tableName: equipment_storage_order
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: equipment_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: storage_location_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: status, type: VARCHAR(32), constraints: { nullable: false }, defaultValue: "IN_PROGRESS" }
+              - column: { name: vendor_name, type: VARCHAR(256) }
+              - column: { name: vendor_inn, type: VARCHAR(32) }
+              - column: { name: sla_until, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: started_at, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: released_at, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: expected_cost, type: "NUMERIC(18,2)" }
+              - column: { name: actual_cost, type: "NUMERIC(18,2)" }
+              - column: { name: currency, type: VARCHAR(3) }
+              - column: { name: procurement_service_order_id, type: BIGINT }
+              - column: { name: note, type: VARCHAR(512) }
+              - column: { name: created_by, type: VARCHAR(128) }
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+              - column: { name: updated_at, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: correlation_id, type: VARCHAR(64) }
+        - addForeignKeyConstraint:
+            baseTableName: equipment_storage_order
+            baseColumnNames: equipment_id
+            referencedTableName: equipment
+            referencedColumnNames: id
+            constraintName: fk_equipment_storage_equipment
+            onDelete: CASCADE
+        - createIndex:
+            indexName: idx_equipment_storage_equipment
+            tableName: equipment_storage_order
+            columns:
+              - column: { name: equipment_id }
+              - column: { name: storage_location_id }
+        - createTable:
+            tableName: equipment_valuation
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: equipment_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: valuation_amount, type: "NUMERIC(18,2)" }
+              - column: { name: liquidation_amount, type: "NUMERIC(18,2)" }
+              - column: { name: currency, type: VARCHAR(3) }
+              - column: { name: valuated_at, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: vendor_name, type: VARCHAR(256) }
+              - column: { name: vendor_inn, type: VARCHAR(32) }
+              - column: { name: report_document_id, type: UUID }
+              - column: { name: note, type: VARCHAR(512) }
+              - column: { name: created_by, type: VARCHAR(128) }
+              - column: { name: created_at, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+              - column: { name: updated_at, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: correlation_id, type: VARCHAR(64) }
+        - addForeignKeyConstraint:
+            baseTableName: equipment_valuation
+            baseColumnNames: equipment_id
+            referencedTableName: equipment
+            referencedColumnNames: id
+            constraintName: fk_equipment_valuation_equipment
+            onDelete: CASCADE
+        - createIndex:
+            indexName: idx_equipment_valuation_equipment
+            tableName: equipment_valuation
+            columns:
+              - column: { name: equipment_id }
+        - createTable:
+            tableName: equipment_custody_history
+            columns:
+              - column: { name: id, type: BIGSERIAL, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: equipment_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: location_id, type: BIGINT }
+              - column: { name: custodian, type: VARCHAR(128) }
+              - column: { name: from_ts, type: TIMESTAMP WITH TIME ZONE, constraints: { nullable: false }, defaultValueComputed: CURRENT_TIMESTAMP }
+              - column: { name: to_ts, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: reason, type: VARCHAR(128) }
+        - addForeignKeyConstraint:
+            baseTableName: equipment_custody_history
+            baseColumnNames: equipment_id
+            referencedTableName: equipment
+            referencedColumnNames: id
+            constraintName: fk_equipment_custody_equipment
+            onDelete: CASCADE
+  - changeSet:
+      id: 021-location-version
+      author: system
+      changes:
+        - addColumn:
+            tableName: location
+            columns:
+              - column:
+                  name: version
+                  type: BIGINT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: 022-storage-order-service-link
+      author: system
+      changes:
+        - createIndex:
+            indexName: idx_storage_order_service_order
+            tableName: equipment_storage_order
+            columns:
+              - column:
+                  name: procurement_service_order_id
+        - sql:
+            dbms: postgresql
+            sql: CREATE UNIQUE INDEX IF NOT EXISTS ux_storage_order_service_order ON equipment_storage_order (procurement_service_order_id) WHERE procurement_service_order_id IS NOT NULL;

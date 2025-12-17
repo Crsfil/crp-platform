@@ -8,20 +8,26 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.http.HttpMethod;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import com.example.crp.reports.security.ReportsAbacFilter;
+import com.example.crp.reports.security.ReportsAbacProperties;
 
 @Configuration
 @EnableMethodSecurity
+@EnableConfigurationProperties(ReportsAbacProperties.class)
 public class SecurityConfig {
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, ReportsAbacFilter abacFilter) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/**", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                         // RBAC: любые репорты доступны ролям с REPORTS_READ или ADMIN
                         .requestMatchers("/reports/**").hasAnyAuthority("REPORTS_READ", "ROLE_ADMIN")
                         .anyRequest().authenticated())
-                .oauth2ResourceServer(o -> o.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter())));
+                .oauth2ResourceServer(o -> o.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter())))
+                .addFilterAfter(abacFilter, BearerTokenAuthenticationFilter.class);
         return http.build();
     }
 

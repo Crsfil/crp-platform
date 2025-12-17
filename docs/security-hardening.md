@@ -57,6 +57,18 @@
 - В сервисах включена `@EnableMethodSecurity` и используются `JwtAuthenticationConverter` для маппинга `roles/authorities` в GrantedAuthorities.
 - Рекомендация: критичные операции закрывать через `@PreAuthorize` и/или matchers на уровне `SecurityFilterChain`.
 
+## ABAC + MFA (step‑up)
+- ABAC по локациям/филиалам включается через:
+  - `inventory.security.location-abac.enabled=true`
+  - `inventory.security.location-abac.region-claim=region`
+  - `inventory.security.location-abac.branch-claim=branch` (используется `Location.code`)
+- В Keycloak добавлены мапперы `region` и `branch` (user attributes → token claims) для клиента `crp-cli`.
+- MFA для чувствительных операций включается через:
+  - `crp.security.mfa.required=true`
+  - `crp.security.mfa.claim=amr`
+  - `crp.security.mfa.value=otp` (при необходимости можно настроить под `acr` числом)
+- В Keycloak включён required action `CONFIGURE_TOTP`, чтобы пользователи настраивали OTP.
+
 ## mTLS (опционально, в дополнение к JWT)
 - Рекомендуется для Intra‑cluster: включить взаимную аутентификацию на уровне канала.
 - Kubernetes: cert‑manager → выдать pod‑certificates; в сервисах `server.ssl.*` + `server.ssl.client-auth=need`.

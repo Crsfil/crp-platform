@@ -15,6 +15,9 @@
 - INVENTORY_READ / INVENTORY_WRITE
 - PROCUREMENT_READ / PROCUREMENT_WRITE / PROCUREMENT_APPROVE
 - REPORTS_READ
+- INVENTORY_REPOSSESS / INVENTORY_STORAGE / INVENTORY_DISPOSE — чувствительные операции по изъятию/хранению/реализации
+- PROCUREMENT_TENDER — управление RFQ/тендерами на услуги (эвакуация/хранение/оценка/ремонт/аукцион)
+- REPORTS_ADMIN — управление каталогом отчётов/шаблонов
 
 ## Маппинг ролей в токены (claims)
 - Protocol mappers в клиенте `crp-cli` добавляют:

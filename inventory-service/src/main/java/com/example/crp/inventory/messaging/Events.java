@@ -9,6 +9,19 @@ public class Events {
     public record InventoryReserved(Long requestId, Long equipmentId) {}
     public record InventoryReleased(Long requestId, Long equipmentId) {}
     public record InventoryReserveFailed(Long requestId, Long equipmentId, String reason) {}
+    public record ProcurementServiceCompleted(Long serviceOrderId,
+                                              String serviceType,
+                                              Long equipmentId,
+                                              Long locationId,
+                                              Long supplierId,
+                                              java.math.BigDecimal actualCost,
+                                              java.util.UUID actDocumentId,
+                                              java.time.OffsetDateTime completedAt) {}
+    public record ProcurementServiceCreated(Long serviceOrderId,
+                                            String serviceType,
+                                            Long equipmentId,
+                                            Long locationId,
+                                            Long supplierId) {}
 
     public record GoodsReceiptAccepted(Long receiptId,
                                        Long purchaseOrderId,
@@ -91,6 +104,12 @@ public class Events {
                                                      Long repossessLocationId,
                                                      String repossessedBy,
                                                      String correlationId) {}
+
+    public record InventoryRepossessionStarted(Long repossessionCaseId,
+                                               Long equipmentId,
+                                               Long targetLocationId,
+                                               String initiatedBy,
+                                               String correlationId) {}
 
     public record InventoryEquipmentDispositionCreated(Long dispositionId,
                                                        Long equipmentId,
@@ -228,10 +247,10 @@ public class Events {
 
     public record InventoryStocktakeSubmitted(Long stocktakeId,
                                               Long locationId,
-                                              int totalLines,
-                                              int countedLines,
-                                              String submittedBy,
-                                              String correlationId) {}
+                                            int totalLines,
+                                            int countedLines,
+                                            String submittedBy,
+                                            String correlationId) {}
 
     public record InventoryStocktakeClosed(Long stocktakeId,
                                            Long locationId,
@@ -241,4 +260,18 @@ public class Events {
                                            String closedBy,
                                            boolean applied,
                                            String correlationId) {}
+
+    public record InventoryStorageAccepted(Long storageOrderId,
+                                           Long equipmentId,
+                                           Long storageLocationId,
+                                           String createdBy,
+                                           String correlationId) {}
+
+    public record InventoryValuationRecorded(Long valuationId,
+                                             Long equipmentId,
+                                             BigDecimal valuationAmount,
+                                             BigDecimal liquidationAmount,
+                                             String currency,
+                                             String createdBy,
+                                             String correlationId) {}
 }

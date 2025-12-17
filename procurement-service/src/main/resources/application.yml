@@ -26,10 +26,6 @@ spring:
       max-poll-records: 200
     listener:
       type: batch
-    producer:
-      observation-enabled: true
-    consumer:
-      observation-enabled: true
   data:
     redis:
       host: ${REDIS_HOST:redis}
@@ -68,8 +64,26 @@ crp:
 outbox:
   procurement:
     poll-ms: 2000
+  metrics:
+    poll-ms: ${OUTBOX_METRICS_POLL_MS:60000}
+  retention:
+    days: ${OUTBOX_RETENTION_DAYS:30}
+    poll-ms: ${OUTBOX_RETENTION_POLL_MS:3600000}
 
 procurement:
+  security:
+    abac:
+      enabled: ${PROCUREMENT_ABAC_ENABLED:true}
+      required-claims: ${PROCUREMENT_ABAC_REQUIRED_CLAIMS:region,branch}
+      admin-bypass: ${PROCUREMENT_ABAC_ADMIN_BYPASS:true}
+      trusted-client-bypass: ${PROCUREMENT_ABAC_TRUSTED_CLIENT_BYPASS:true}
+      paths:
+        - /requests/**
+        - /service/**
+        - /purchase-orders/**
+        - /goods-receipts/**
+        - /suppliers/**
+        - /attachments/**
   attachments:
     storage:
       type: ${PROCUREMENT_ATTACHMENTS_STORAGE_TYPE:filesystem}

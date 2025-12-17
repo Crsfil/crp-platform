@@ -27,6 +27,15 @@
         "name": "INVENTORY_WRITE"
       },
       {
+        "name": "INVENTORY_REPOSSESS"
+      },
+      {
+        "name": "INVENTORY_STORAGE"
+      },
+      {
+        "name": "INVENTORY_DISPOSE"
+      },
+      {
         "name": "MANAGER"
       },
       {
@@ -39,19 +48,48 @@
         "name": "PROCUREMENT_WRITE"
       },
       {
+        "name": "PROCUREMENT_TENDER"
+      },
+      {
         "name": "REPORTS_READ"
+      },
+      {
+        "name": "REPORTS_ADMIN"
       },
       {
         "name": "USER"
       }
     ]
   },
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA1",
+  "otpPolicyDigits": 6,
+  "otpPolicyPeriod": 30,
+  "otpPolicyLookAheadWindow": 1,
+  "requiredActions": [
+    {
+      "alias": "CONFIGURE_TOTP",
+      "name": "Configure OTP",
+      "providerId": "CONFIGURE_TOTP",
+      "enabled": true,
+      "defaultAction": true,
+      "priority": 10
+    }
+  ],
   "users": [
     {
       "username": "admin@crp.local",
       "email": "admin@crp.local",
       "enabled": true,
       "emailVerified": true,
+      "attributes": {
+        "region": [
+          "msk"
+        ],
+        "branch": [
+          "moscow"
+        ]
+      },
       "credentials": [
         {
           "type": "password",
@@ -64,10 +102,15 @@
         "ANALYST",
         "INVENTORY_READ",
         "INVENTORY_WRITE",
+        "INVENTORY_REPOSSESS",
+        "INVENTORY_STORAGE",
+        "INVENTORY_DISPOSE",
         "MANAGER",
         "PROCUREMENT_APPROVE",
         "PROCUREMENT_READ",
         "PROCUREMENT_WRITE",
+        "PROCUREMENT_TENDER",
+        "REPORTS_ADMIN",
         "REPORTS_READ",
         "USER"
       ]
@@ -127,6 +170,36 @@
             "access.token.claim": "true",
             "claim.name": "authorities",
             "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "user-region-claim",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "region",
+            "jsonType.label": "String",
+            "user.attribute": "region",
+            "multivalued": "false"
+          }
+        },
+        {
+          "name": "user-branch-claim",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "branch",
+            "jsonType.label": "String",
+            "user.attribute": "branch",
+            "multivalued": "false"
           }
         },
         {

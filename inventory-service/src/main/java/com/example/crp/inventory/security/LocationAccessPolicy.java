@@ -2,6 +2,7 @@ package com.example.crp.inventory.security;
 
 import com.example.crp.inventory.config.InventoryLocationAbacProperties;
 import com.example.crp.inventory.domain.Location;
+import com.example.crp.security.TrustedClientAuthorizer;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -14,9 +15,11 @@ import java.util.Locale;
 public class LocationAccessPolicy {
 
     private final InventoryLocationAbacProperties props;
+    private final TrustedClientAuthorizer trustedClientAuthorizer;
 
-    public LocationAccessPolicy(InventoryLocationAbacProperties props) {
+    public LocationAccessPolicy(InventoryLocationAbacProperties props, TrustedClientAuthorizer trustedClientAuthorizer) {
         this.props = props;
+        this.trustedClientAuthorizer = trustedClientAuthorizer;
     }
 
     public void assertWriteAllowed(Authentication auth, Location location) {
@@ -38,6 +41,9 @@ public class LocationAccessPolicy {
         if (auth == null) {
             return false;
         }
+        if (props.isTrustedClientBypass() && trustedClientAuthorizer != null && trustedClientAuthorizer.isTrusted(auth)) {
+            return true;
+        }
         if (hasRoleAdmin(auth)) {
             return true;
         }
@@ -45,11 +51,16 @@ public class LocationAccessPolicy {
             return false;
         }
         String locRegion = normalize(location.getRegion());
-        if (locRegion == null) {
+        String locBranch = normalize(location.getCode());
+        if (locRegion == null && locBranch == null) {
             return true; // unscoped location
         }
-        String userRegion = normalize(getClaim(auth, props.getRegionClaim()));
-        return userRegion != null && userRegion.equals(locRegion);
+        var userRegions = claimValues(auth, props.getRegionClaim());
+        var userBranches = claimValues(auth, props.getBranchClaim());
+        if (locRegion != null && userRegions.contains(locRegion)) {
+            return true;
+        }
+        return locBranch != null && userBranches.contains(locBranch);
     }
 
     public boolean isReadAllowed(Authentication auth, Location location) {
@@ -67,14 +78,33 @@ public class LocationAccessPolicy {
         return false;
     }
 
-    private static String getClaim(Authentication auth, String claimName) {
+    private static java.util.Set<String> claimValues(Authentication auth, String claimName) {
         if (!(auth instanceof JwtAuthenticationToken jwtAuth)) {
-            return null;
+            return java.util.Set.of();
         }
         Jwt jwt = jwtAuth.getToken();
-        if (jwt == null) return null;
+        if (jwt == null) return java.util.Set.of();
         Object val = jwt.getClaims().get(claimName);
-        return val == null ? null : val.toString();
+        if (val == null) return java.util.Set.of();
+        java.util.Set<String> values = new java.util.HashSet<>();
+        if (val instanceof java.util.Collection<?> collection) {
+            for (Object v : collection) {
+                String s = normalize(v == null ? null : v.toString());
+                if (s != null) values.add(s);
+            }
+            return values;
+        }
+        if (val.getClass().isArray()) {
+            Object[] arr = (Object[]) val;
+            for (Object v : arr) {
+                String s = normalize(v == null ? null : v.toString());
+                if (s != null) values.add(s);
+            }
+            return values;
+        }
+        String s = normalize(val.toString());
+        if (s != null) values.add(s);
+        return values;
     }
 
     private static String normalize(String s) {

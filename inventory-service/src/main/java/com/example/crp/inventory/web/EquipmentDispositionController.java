@@ -23,13 +23,16 @@ public class EquipmentDispositionController {
     private final EquipmentRepository equipmentRepository;
     private final EquipmentDispositionService service;
     private final EquipmentDispositionDocumentsService documentsService;
+    private final com.example.crp.inventory.security.MfaPolicy mfaPolicy;
 
     public EquipmentDispositionController(EquipmentRepository equipmentRepository,
                                           EquipmentDispositionService service,
-                                          EquipmentDispositionDocumentsService documentsService) {
+                                          EquipmentDispositionDocumentsService documentsService,
+                                          com.example.crp.inventory.security.MfaPolicy mfaPolicy) {
         this.equipmentRepository = equipmentRepository;
         this.service = service;
         this.documentsService = documentsService;
+        this.mfaPolicy = mfaPolicy;
     }
 
     @GetMapping("/{id}/dispositions")
@@ -76,13 +79,16 @@ public class EquipmentDispositionController {
     }
 
     @PostMapping("/dispositions/{id}/approve")
-    @PreAuthorize("hasAuthority('INVENTORY_WRITE') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('INVENTORY_DISPOSE') or hasAuthority('INVENTORY_WRITE') or hasRole('ADMIN')")
     public ResponseEntity<?> approve(@PathVariable("id") Long id,
                                      Authentication auth,
                                      HttpServletRequest servletRequest) {
         try {
             String user = auth == null ? null : auth.getName();
             String correlationId = servletRequest.getHeader("X-Correlation-Id");
+            if (!mfaPolicy.isSatisfied(auth)) {
+                return ResponseEntity.status(403).body(java.util.Map.of("error", "mfa_required"));
+            }
             return ResponseEntity.ok(InventoryMappers.toDisposition(service.approve(id, user, correlationId)));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", ex.getMessage()));
@@ -94,7 +100,7 @@ public class EquipmentDispositionController {
     }
 
     @PostMapping("/dispositions/{id}/sale/contract")
-    @PreAuthorize("hasAuthority('INVENTORY_WRITE') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('INVENTORY_DISPOSE') or hasAuthority('INVENTORY_WRITE') or hasRole('ADMIN')")
     public ResponseEntity<?> contractSale(@PathVariable("id") Long id,
                                           @Valid @RequestBody InventoryDtos.ContractSale req,
                                           Authentication auth,
@@ -102,6 +108,9 @@ public class EquipmentDispositionController {
         try {
             String user = auth == null ? null : auth.getName();
             String correlationId = servletRequest.getHeader("X-Correlation-Id");
+            if (!mfaPolicy.isSatisfied(auth)) {
+                return ResponseEntity.status(403).body(java.util.Map.of("error", "mfa_required"));
+            }
             return ResponseEntity.ok(InventoryMappers.toDisposition(service.contractSale(
                     id, req.saleMethod(), req.lotNumber(), req.contractNumber(), user, correlationId
             )));
@@ -115,7 +124,7 @@ public class EquipmentDispositionController {
     }
 
     @PostMapping("/dispositions/{id}/sale/invoice")
-    @PreAuthorize("hasAuthority('INVENTORY_WRITE') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('INVENTORY_DISPOSE') or hasAuthority('INVENTORY_WRITE') or hasRole('ADMIN')")
     public ResponseEntity<?> invoiceSale(@PathVariable("id") Long id,
                                          @Valid @RequestBody InventoryDtos.InvoiceSale req,
                                          Authentication auth,
@@ -123,6 +132,9 @@ public class EquipmentDispositionController {
         try {
             String user = auth == null ? null : auth.getName();
             String correlationId = servletRequest.getHeader("X-Correlation-Id");
+            if (!mfaPolicy.isSatisfied(auth)) {
+                return ResponseEntity.status(403).body(java.util.Map.of("error", "mfa_required"));
+            }
             return ResponseEntity.ok(InventoryMappers.toDisposition(service.invoiceSale(
                     id, req.invoiceNumber(), user, correlationId
             )));
@@ -136,7 +148,7 @@ public class EquipmentDispositionController {
     }
 
     @PostMapping("/dispositions/{id}/sale/paid")
-    @PreAuthorize("hasAuthority('INVENTORY_WRITE') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('INVENTORY_DISPOSE') or hasAuthority('INVENTORY_WRITE') or hasRole('ADMIN')")
     public ResponseEntity<?> markPaid(@PathVariable("id") Long id,
                                       @Valid @RequestBody InventoryDtos.MarkSalePaid req,
                                       Authentication auth,
@@ -144,6 +156,9 @@ public class EquipmentDispositionController {
         try {
             String user = auth == null ? null : auth.getName();
             String correlationId = servletRequest.getHeader("X-Correlation-Id");
+            if (!mfaPolicy.isSatisfied(auth)) {
+                return ResponseEntity.status(403).body(java.util.Map.of("error", "mfa_required"));
+            }
             return ResponseEntity.ok(InventoryMappers.toDisposition(service.markPaid(
                     id, req.paidAt(), user, correlationId
             )));
@@ -157,7 +172,7 @@ public class EquipmentDispositionController {
     }
 
     @PostMapping("/dispositions/{id}/complete")
-    @PreAuthorize("hasAuthority('INVENTORY_WRITE') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('INVENTORY_DISPOSE') or hasAuthority('INVENTORY_WRITE') or hasRole('ADMIN')")
     public ResponseEntity<?> complete(@PathVariable("id") Long id,
                                       @Valid @RequestBody InventoryDtos.CompleteDisposition req,
                                       Authentication auth,
@@ -165,6 +180,9 @@ public class EquipmentDispositionController {
         try {
             String user = auth == null ? null : auth.getName();
             String correlationId = servletRequest.getHeader("X-Correlation-Id");
+            if (!mfaPolicy.isSatisfied(auth)) {
+                return ResponseEntity.status(403).body(java.util.Map.of("error", "mfa_required"));
+            }
             return ResponseEntity.ok(InventoryMappers.toDisposition(service.complete(id, req.actualPrice(), req.performedAt(), user, correlationId, auth)));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", ex.getMessage()));
@@ -178,13 +196,16 @@ public class EquipmentDispositionController {
     }
 
     @PostMapping("/dispositions/{id}/cancel")
-    @PreAuthorize("hasAuthority('INVENTORY_WRITE') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('INVENTORY_DISPOSE') or hasAuthority('INVENTORY_WRITE') or hasRole('ADMIN')")
     public ResponseEntity<?> cancel(@PathVariable("id") Long id,
                                     Authentication auth,
                                     HttpServletRequest servletRequest) {
         try {
             String user = auth == null ? null : auth.getName();
             String correlationId = servletRequest.getHeader("X-Correlation-Id");
+            if (!mfaPolicy.isSatisfied(auth)) {
+                return ResponseEntity.status(403).body(java.util.Map.of("error", "mfa_required"));
+            }
             return ResponseEntity.ok(InventoryMappers.toDisposition(service.cancel(id, user, correlationId)));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", ex.getMessage()));

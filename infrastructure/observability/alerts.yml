@@ -1,0 +1,88 @@
+groups:
+  - name: crp-alerts
+    rules:
+      - alert: InstanceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service is down"
+          description: "Target {{ $labels.instance }} (job={{ $labels.job }}) is not reachable."
+          runbook_url: "docs/runbooks/operations.md#instance-down"
+      - alert: High5xxRate
+        expr: |
+          sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+          /
+          clamp_min(sum(rate(http_server_requests_seconds_count[5m])), 1)
+          > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High 5xx rate"
+          description: "5xx ratio above 5% for 5m."
+          runbook_url: "docs/runbooks/operations.md#high-5xx-rate"
+      - alert: ErrorBudgetBurnShort
+        expr: job:http_error_ratio:rate5m > 0.02
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Short-term error budget burn"
+          description: "5m error ratio above 2% for 10m on job {{ $labels.job }}."
+          runbook_url: "docs/runbooks/operations.md#error-budget-burn"
+      - alert: ErrorBudgetBurnLong
+        expr: job:http_error_ratio:rate5m > 0.01
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Sustained error budget burn"
+          description: "5m error ratio above 1% for 1h on job {{ $labels.job }}."
+          runbook_url: "docs/runbooks/operations.md#error-budget-burn"
+      - alert: OutboxBacklogHigh
+        expr: outbox_pending > 100
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Outbox backlog high"
+          description: "Pending outbox events > 100 for {{ $labels.service }}."
+          runbook_url: "docs/runbooks/operations.md#outbox-backlog"
+      - alert: OutboxStuck
+        expr: outbox_oldest_age_seconds > 900
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Outbox stuck"
+          description: "Oldest outbox event older than 15m for {{ $labels.service }}."
+          runbook_url: "docs/runbooks/operations.md#outbox-backlog"
+      - alert: ProcurementStorageOverdue
+        expr: procurement_service_order_overdue{service_type="SERVICE_STORAGE"} > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Storage SLA overdue"
+          description: "Overdue storage service orders detected."
+          runbook_url: "docs/runbooks/operations.md#sla-overdue"
+      - alert: ProcurementValuationOverdue
+        expr: procurement_service_order_overdue{service_type="SERVICE_VALUATION"} > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Valuation SLA overdue"
+          description: "Overdue valuation service orders detected."
+          runbook_url: "docs/runbooks/operations.md#sla-overdue"
+      - alert: ProcurementRepairOverdue
+        expr: procurement_service_order_overdue{service_type="SERVICE_REPAIR"} > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Repair SLA overdue"
+          description: "Overdue repair service orders detected."
+          runbook_url: "docs/runbooks/operations.md#sla-overdue"

@@ -54,4 +54,34 @@ public class ReportsController {
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(data);
     }
+
+    @GetMapping("/repossessed-portfolio.xlsx")
+    @PreAuthorize("hasAuthority('REPORTS_READ') or hasRole('ADMIN')")
+    public ResponseEntity<byte[]> repossessedPortfolio() {
+        byte[] data = generator.repossessedPortfolioXlsx();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=repossessed-portfolio.xlsx")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(data);
+    }
+
+    @GetMapping("/storage-costs.xlsx")
+    @PreAuthorize("hasAuthority('REPORTS_READ') or hasRole('ADMIN')")
+    public ResponseEntity<byte[]> storageCosts() {
+        byte[] data = generator.storageCostsXlsx();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=storage-costs.xlsx")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(data);
+    }
+
+    @GetMapping("/disposition-results.xlsx")
+    @PreAuthorize("hasAuthority('REPORTS_READ') or hasRole('ADMIN')")
+    public ResponseEntity<byte[]> dispositionResults() {
+        byte[] data = generator.dispositionResultsXlsx();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=disposition-results.xlsx")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(data);
+    }
 }

@@ -43,6 +43,15 @@ procurement:
   base-url: ${PROCUREMENT_BASE_URL:http://procurement-service:8083}
 
 reports:
+  security:
+    abac:
+      enabled: ${REPORTS_ABAC_ENABLED:true}
+      required-claims: ${REPORTS_ABAC_REQUIRED_CLAIMS:region,branch}
+      admin-bypass: ${REPORTS_ABAC_ADMIN_BYPASS:true}
+      paths:
+        - /reports/**
+        - /report-jobs/**
+        - /report-templates/**
   storage:
     type: ${REPORTS_STORAGE_TYPE:filesystem}
     s3:
@@ -53,6 +62,9 @@ reports:
       secret-key: ${REPORTS_S3_SECRET_KEY:}
       path-style-access: ${REPORTS_S3_PATH_STYLE_ACCESS:true}
       presign-ttl: ${REPORTS_S3_PRESIGN_TTL:PT15M}
+  retention:
+    days: ${REPORTS_RETENTION_DAYS:60}
+    poll-ms: ${REPORTS_RETENTION_POLL_MS:3600000}
 
 crp:
   security:

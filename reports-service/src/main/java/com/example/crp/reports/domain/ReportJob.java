@@ -44,6 +44,15 @@ public class ReportJob {
     @Column(name = "sha256")
     private String sha256;
 
+    @Column(name = "snapshot_timestamp")
+    private OffsetDateTime snapshotTimestamp;
+
+    @Column(name = "template_id")
+    private String templateId;
+
+    @Column(name = "dataset_version")
+    private String datasetVersion;
+
     private OffsetDateTime createdAt;
 
     public Long getId() { return id; }
@@ -76,4 +85,10 @@ public class ReportJob {
     public void setSha256(String sha256) { this.sha256 = sha256; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
+    public OffsetDateTime getSnapshotTimestamp() { return snapshotTimestamp; }
+    public void setSnapshotTimestamp(OffsetDateTime snapshotTimestamp) { this.snapshotTimestamp = snapshotTimestamp; }
+    public String getTemplateId() { return templateId; }
+    public void setTemplateId(String templateId) { this.templateId = templateId; }
+    public String getDatasetVersion() { return datasetVersion; }
+    public void setDatasetVersion(String datasetVersion) { this.datasetVersion = datasetVersion; }
 }

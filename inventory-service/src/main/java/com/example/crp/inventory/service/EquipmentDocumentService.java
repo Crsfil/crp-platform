@@ -77,13 +77,39 @@ public class EquipmentDocumentService {
         }
         String originalName = file.getOriginalFilename() == null ? "file.bin" : file.getOriginalFilename();
         String contentType = file.getContentType();
+        long maxBytes = 15 * 1024 * 1024L; // 15MB
+        if (bytes.length > maxBytes) {
+            throw new IllegalArgumentException("file too large (max 15MB)");
+        }
+        if (contentType != null && contentType.length() > 128) {
+            contentType = contentType.substring(0, 128);
+        }
 
         DocumentStorage.StoredObject stored = storage.put("equipment-" + equipmentId, originalName, contentType, bytes);
+
+        String normalizedDocType = (docType == null || docType.isBlank()) ? "GENERIC" : docType.trim().toUpperCase();
+        List<String> allowed = java.util.List.of(
+                "GENERIC",
+                "EQUIPMENT_PASSPORT",
+                "PASSPORT",
+                "PHOTO",
+                "EVACUATION_ACT",
+                "STORAGE_ACT",
+                "VALUATION_REPORT",
+                "REPAIR_REPORT",
+                "AUCTION_REPORT",
+                "SALE_CONTRACT",
+                "INVOICE",
+                "PAYMENT_CONFIRMATION"
+        );
+        if (!allowed.contains(normalizedDocType)) {
+            throw new IllegalArgumentException("unsupported docType");
+        }
 
         EquipmentDocument doc = new EquipmentDocument();
         doc.setId(UUID.randomUUID());
         doc.setEquipmentId(equipmentId);
-        doc.setDocType(docType);
+        doc.setDocType(normalizedDocType);
         doc.setFileName(stored.fileName());
         doc.setContentType(stored.contentType());
         doc.setSizeBytes(stored.sizeBytes());

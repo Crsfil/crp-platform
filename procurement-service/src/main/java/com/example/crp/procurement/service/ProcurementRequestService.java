@@ -28,9 +28,18 @@ public class ProcurementRequestService {
 
     @Transactional
     public ProcurementRequest create(ProcurementRequest pr) {
-        if (pr.getKind() == null || pr.getKind().isBlank()) {
-            pr.setKind("PURCHASE");
+        String kind = pr.getKind();
+        if (kind == null || kind.isBlank()) {
+            kind = "PURCHASE";
         }
+        kind = kind.trim().toUpperCase();
+        // Allow both товарные закупки и сервисные под изъятие/хранение/оценку/ремонт/аукцион
+        var allowedKinds = java.util.Set.of("PURCHASE", "STOCK_RESERVATION",
+                "SERVICE_EVICTION", "SERVICE_STORAGE", "SERVICE_VALUATION", "SERVICE_REPAIR", "SERVICE_AUCTION");
+        if (!allowedKinds.contains(kind)) {
+            throw new IllegalArgumentException("Unsupported request kind: " + kind);
+        }
+        pr.setKind(kind);
         pr.setStatus("SUBMITTED");
         pr.setCreatedAt(OffsetDateTime.now());
 

@@ -21,13 +21,16 @@ public class HeavyReportJobExecutor implements Job {
     private final ReportJobRepository reportJobRepository;
     private final ReportGenerator reportGenerator;
     private final ReportStorage reportStorage;
+    private final com.example.crp.reports.messaging.ReportsEventPublisher eventPublisher;
 
     public HeavyReportJobExecutor(ReportJobRepository reportJobRepository,
                                   ReportGenerator reportGenerator,
-                                  ReportStorage reportStorage) {
+                                  ReportStorage reportStorage,
+                                  com.example.crp.reports.messaging.ReportsEventPublisher eventPublisher) {
         this.reportJobRepository = reportJobRepository;
         this.reportGenerator = reportGenerator;
         this.reportStorage = reportStorage;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -64,6 +67,12 @@ public class HeavyReportJobExecutor implements Job {
                 data = reportGenerator.procurementPipelineXlsx();
             } else if ("SUPPLIER_SPEND_XLSX".equals(job.getType())) {
                 data = reportGenerator.supplierSpendXlsx();
+            } else if ("REPOSSESSED_PORTFOLIO_XLSX".equals(job.getType())) {
+                data = reportGenerator.repossessedPortfolioXlsx();
+            } else if ("STORAGE_COSTS_XLSX".equals(job.getType())) {
+                data = reportGenerator.storageCostsXlsx();
+            } else if ("DISPOSITION_RESULTS_XLSX".equals(job.getType())) {
+                data = reportGenerator.dispositionResultsXlsx();
             } else {
                 job.setStatus("FAILED");
                 job.setFinishedAt(OffsetDateTime.now());
@@ -85,12 +94,14 @@ public class HeavyReportJobExecutor implements Job {
             job.setStatus("DONE");
             job.setFinishedAt(OffsetDateTime.now());
             reportJobRepository.save(job);
+            eventPublisher.publishDone(job);
         } catch (Exception e) {
             job.setStatus("FAILED");
             job.setFinishedAt(OffsetDateTime.now());
             job.setErrorMessage(trim(e.getMessage(), 1000));
             log.warn("Report job {} failed", jobId, e);
             reportJobRepository.save(job);
+            eventPublisher.publishFailed(job);
         }
     }
 

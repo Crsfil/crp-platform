@@ -72,4 +72,13 @@ inventory:
   security:
     location-abac:
       enabled: ${INVENTORY_LOCATION_ABAC_ENABLED:false}
+      trusted-client-bypass: ${INVENTORY_LOCATION_ABAC_TRUSTED_CLIENT_BYPASS:true}
       region-claim: ${INVENTORY_LOCATION_ABAC_REGION_CLAIM:region}
+      branch-claim: ${INVENTORY_LOCATION_ABAC_BRANCH_CLAIM:branch}
+
+outbox:
+  metrics:
+    poll-ms: ${OUTBOX_METRICS_POLL_MS:60000}
+  retention:
+    days: ${OUTBOX_RETENTION_DAYS:30}
+    poll-ms: ${OUTBOX_RETENTION_POLL_MS:3600000}

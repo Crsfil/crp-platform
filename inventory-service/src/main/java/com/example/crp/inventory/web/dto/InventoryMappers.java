@@ -1,18 +1,6 @@
 package com.example.crp.inventory.web.dto;
 
-import com.example.crp.inventory.domain.EquipmentDisposition;
-import com.example.crp.inventory.domain.EquipmentDispositionDocumentLink;
-import com.example.crp.inventory.domain.EquipmentDocument;
-import com.example.crp.inventory.domain.EquipmentLease;
-import com.example.crp.inventory.domain.EquipmentMovement;
-import com.example.crp.inventory.domain.EquipmentInspection;
-import com.example.crp.inventory.domain.EquipmentInspectionFinding;
-import com.example.crp.inventory.domain.EquipmentInspectionDocumentLink;
-import com.example.crp.inventory.domain.EquipmentRepairOrder;
-import com.example.crp.inventory.domain.EquipmentRepairDocumentLink;
-import com.example.crp.inventory.domain.EquipmentRepairLine;
-import com.example.crp.inventory.domain.EquipmentStatusHistory;
-import com.example.crp.inventory.domain.Location;
+import com.example.crp.inventory.domain.*;
 
 public class InventoryMappers {
 
@@ -216,6 +204,75 @@ public class InventoryMappers {
                 l.getUnitCost(),
                 l.getTotalCost(),
                 l.getCreatedAt()
+        );
+    }
+
+    public static InventoryDtos.RepossessionCaseDto toRepossessionCase(EquipmentRepossessionCase c) {
+        return new InventoryDtos.RepossessionCaseDto(
+                c.getId(),
+                c.getEquipmentId(),
+                c.getStatus(),
+                c.getTriggerReason(),
+                c.getDecisionRef(),
+                c.getTargetLocationId(),
+                c.getInitiatedBy(),
+                c.getInitiatedAt(),
+                c.getCreatedAt(),
+                c.getUpdatedAt(),
+                c.getCorrelationId()
+        );
+    }
+
+    public static InventoryDtos.StorageOrderDto toStorageOrder(EquipmentStorageOrder o) {
+        return new InventoryDtos.StorageOrderDto(
+                o.getId(),
+                o.getEquipmentId(),
+                o.getStorageLocationId(),
+                o.getStatus(),
+                o.getVendorName(),
+                o.getVendorInn(),
+                o.getSlaUntil(),
+                o.getStartedAt(),
+                o.getReleasedAt(),
+                o.getExpectedCost(),
+                o.getActualCost(),
+                o.getCurrency(),
+                o.getProcurementServiceOrderId(),
+                o.getNote(),
+                o.getCreatedBy(),
+                o.getCreatedAt(),
+                o.getUpdatedAt(),
+                o.getCorrelationId()
+        );
+    }
+
+    public static InventoryDtos.ValuationDto toValuation(EquipmentValuation v) {
+        return new InventoryDtos.ValuationDto(
+                v.getId(),
+                v.getEquipmentId(),
+                v.getValuationAmount(),
+                v.getLiquidationAmount(),
+                v.getCurrency(),
+                v.getValuatedAt(),
+                v.getVendorName(),
+                v.getVendorInn(),
+                v.getNote(),
+                v.getCreatedBy(),
+                v.getCreatedAt(),
+                v.getUpdatedAt(),
+                v.getCorrelationId()
+        );
+    }
+
+    public static InventoryDtos.CustodyDto toCustody(EquipmentCustodyHistory c) {
+        return new InventoryDtos.CustodyDto(
+                c.getId(),
+                c.getEquipmentId(),
+                c.getLocationId(),
+                c.getCustodian(),
+                c.getFromTs(),
+                c.getToTs(),
+                c.getReason()
         );
     }
 }
