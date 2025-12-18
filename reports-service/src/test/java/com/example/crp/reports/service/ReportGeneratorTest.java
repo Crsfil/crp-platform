@@ -29,7 +29,13 @@ class ReportGeneratorTest {
         );
         ReportGenerator generator = new ReportGenerator(
                 stubClient(inventoryResponses),
+                stubClient(inventoryResponses),
                 stubClient(Map.of("/service/orders", "[]")),
+                stubClient(Map.of("/service/orders", "[]")),
+                stubClient(Map.of()),
+                stubClient(Map.of()),
+                stubClient(Map.of()),
+                stubClient(Map.of()),
                 stubClient(Map.of()),
                 stubClient(Map.of()),
                 stubClient(Map.of()),
@@ -55,7 +61,13 @@ class ReportGeneratorTest {
         );
         ReportGenerator generator = new ReportGenerator(
                 stubClient(Map.of("/equipment", "[]")),
+                stubClient(Map.of("/equipment", "[]")),
                 stubClient(procurementResponses),
+                stubClient(procurementResponses),
+                stubClient(Map.of()),
+                stubClient(Map.of()),
+                stubClient(Map.of()),
+                stubClient(Map.of()),
                 stubClient(Map.of()),
                 stubClient(Map.of()),
                 stubClient(Map.of()),
@@ -84,7 +96,13 @@ class ReportGeneratorTest {
         );
         ReportGenerator generator = new ReportGenerator(
                 stubClient(inventoryResponses),
+                stubClient(inventoryResponses),
                 stubClient(Map.of("/service/orders", "[]")),
+                stubClient(Map.of("/service/orders", "[]")),
+                stubClient(Map.of()),
+                stubClient(Map.of()),
+                stubClient(Map.of()),
+                stubClient(Map.of()),
                 stubClient(Map.of()),
                 stubClient(Map.of()),
                 stubClient(Map.of()),

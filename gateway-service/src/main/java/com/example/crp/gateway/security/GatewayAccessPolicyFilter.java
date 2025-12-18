@@ -1,13 +1,12 @@
 package com.example.crp.gateway.security;
 
-import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-import org.springframework.security.web.server.SecurityWebFiltersOrder;
+import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
@@ -23,8 +22,7 @@ import java.util.Locale;
 import java.util.Set;
 
 @Component
-@Order(SecurityWebFiltersOrder.AUTHORIZATION.getOrder() + 1)
-public class GatewayAccessPolicyFilter implements WebFilter {
+public class GatewayAccessPolicyFilter implements WebFilter, org.springframework.core.Ordered {
     private final GatewaySecurityProperties props;
     private final List<PathPattern> mfaPatterns;
     private final List<PathPattern> abacPatterns;
@@ -199,5 +197,10 @@ public class GatewayAccessPolicyFilter implements WebFilter {
         String t = s.trim();
         if (t.isEmpty()) return null;
         return t.toLowerCase(Locale.ROOT);
+    }
+
+    @Override
+    public int getOrder() {
+        return SecurityWebFiltersOrder.AUTHORIZATION.getOrder() + 1;
     }
 }

@@ -2,6 +2,7 @@ package com.example.crp.reports.config;
 
 import com.example.crp.serviceauth.BearerExchangeFilter;
 import com.example.crp.serviceauth.ClientCredentialsTokenManager;
+import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -38,39 +39,69 @@ public class S2SClientsConfig {
     private String clientSecret;
 
     @Bean
-    public WebClient inventoryClient(WebClient.Builder builder) {
-        ClientCredentialsTokenManager tm = new ClientCredentialsTokenManager(builder.build(), issuer, clientId, clientSecret);
+    public WebClient inventoryClient(WebClient.Builder builder, ReactiveStringRedisTemplate redis) {
+        ClientCredentialsTokenManager tm = new ClientCredentialsTokenManager(builder.build(), issuer, clientId, clientSecret, redis, "s2s:cc");
         return builder.clone().baseUrl(inventoryBaseUrl).filter(new BearerExchangeFilter(tm)).build();
     }
 
     @Bean
-    public WebClient procurementClient(WebClient.Builder builder) {
-        ClientCredentialsTokenManager tm = new ClientCredentialsTokenManager(builder.build(), issuer, clientId, clientSecret);
+    public WebClient inventoryUserClient(WebClient.Builder builder) {
+        return builder.clone().baseUrl(inventoryBaseUrl).build();
+    }
+
+    @Bean
+    public WebClient procurementClient(WebClient.Builder builder, ReactiveStringRedisTemplate redis) {
+        ClientCredentialsTokenManager tm = new ClientCredentialsTokenManager(builder.build(), issuer, clientId, clientSecret, redis, "s2s:cc");
         return builder.clone().baseUrl(procurementBaseUrl).filter(new BearerExchangeFilter(tm)).build();
     }
 
     @Bean
-    public WebClient agreementClient(WebClient.Builder builder) {
-        ClientCredentialsTokenManager tm = new ClientCredentialsTokenManager(builder.build(), issuer, clientId, clientSecret);
+    public WebClient procurementUserClient(WebClient.Builder builder) {
+        return builder.clone().baseUrl(procurementBaseUrl).build();
+    }
+
+    @Bean
+    public WebClient agreementClient(WebClient.Builder builder, ReactiveStringRedisTemplate redis) {
+        ClientCredentialsTokenManager tm = new ClientCredentialsTokenManager(builder.build(), issuer, clientId, clientSecret, redis, "s2s:cc");
         return builder.clone().baseUrl(agreementBaseUrl).filter(new BearerExchangeFilter(tm)).build();
     }
 
     @Bean
-    public WebClient billingClient(WebClient.Builder builder) {
-        ClientCredentialsTokenManager tm = new ClientCredentialsTokenManager(builder.build(), issuer, clientId, clientSecret);
+    public WebClient agreementUserClient(WebClient.Builder builder) {
+        return builder.clone().baseUrl(agreementBaseUrl).build();
+    }
+
+    @Bean
+    public WebClient billingClient(WebClient.Builder builder, ReactiveStringRedisTemplate redis) {
+        ClientCredentialsTokenManager tm = new ClientCredentialsTokenManager(builder.build(), issuer, clientId, clientSecret, redis, "s2s:cc");
         return builder.clone().baseUrl(billingBaseUrl).filter(new BearerExchangeFilter(tm)).build();
     }
 
     @Bean
-    public WebClient customerClient(WebClient.Builder builder) {
-        ClientCredentialsTokenManager tm = new ClientCredentialsTokenManager(builder.build(), issuer, clientId, clientSecret);
+    public WebClient billingUserClient(WebClient.Builder builder) {
+        return builder.clone().baseUrl(billingBaseUrl).build();
+    }
+
+    @Bean
+    public WebClient customerClient(WebClient.Builder builder, ReactiveStringRedisTemplate redis) {
+        ClientCredentialsTokenManager tm = new ClientCredentialsTokenManager(builder.build(), issuer, clientId, clientSecret, redis, "s2s:cc");
         return builder.clone().baseUrl(customerBaseUrl).filter(new BearerExchangeFilter(tm)).build();
     }
 
     @Bean
-    public WebClient applicationClient(WebClient.Builder builder) {
-        ClientCredentialsTokenManager tm = new ClientCredentialsTokenManager(builder.build(), issuer, clientId, clientSecret);
+    public WebClient customerUserClient(WebClient.Builder builder) {
+        return builder.clone().baseUrl(customerBaseUrl).build();
+    }
+
+    @Bean
+    public WebClient applicationClient(WebClient.Builder builder, ReactiveStringRedisTemplate redis) {
+        ClientCredentialsTokenManager tm = new ClientCredentialsTokenManager(builder.build(), issuer, clientId, clientSecret, redis, "s2s:cc");
         return builder.clone().baseUrl(applicationBaseUrl).filter(new BearerExchangeFilter(tm)).build();
+    }
+
+    @Bean
+    public WebClient applicationUserClient(WebClient.Builder builder) {
+        return builder.clone().baseUrl(applicationBaseUrl).build();
     }
 }
 

@@ -77,7 +77,8 @@ public class IdempotencyFilter implements GlobalFilter, Ordered {
     }
 
     private String buildRedisKey(ServerWebExchange exchange, String key) {
-        String method = exchange.getRequest().getMethodValue();
+        HttpMethod m = exchange.getRequest().getMethod();
+        String method = m == null ? "UNKNOWN" : m.name();
         String path = exchange.getRequest().getPath().value();
         return "idem:" + method + ":" + path + ":" + key;
     }
@@ -98,4 +99,3 @@ public class IdempotencyFilter implements GlobalFilter, Ordered {
         return -50;
     }
 }
-

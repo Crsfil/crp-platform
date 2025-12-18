@@ -225,6 +225,17 @@
           }
         },
         {
+          "name": "aud-reports",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "reports-service",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        },
+        {
           "name": "aud-customer",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",
@@ -434,6 +445,27 @@
           "consentRequired": false,
           "config": {
             "included.client.audience": "application-service",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "procurement-s2s",
+      "name": "procurement-s2s",
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "secret": "procurement-s2s-secret",
+      "protocolMappers": [
+        {
+          "name": "audience-inventory",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "inventory-service",
             "id.token.claim": "false",
             "access.token.claim": "true"
           }

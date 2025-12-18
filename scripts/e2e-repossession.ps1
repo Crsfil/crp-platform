@@ -1,7 +1,6 @@
 param(
     [string]$KeycloakUrl = "http://localhost:18080",
-    [string]$InventoryUrl = "http://localhost:8082",
-    [string]$ProcurementUrl = "http://localhost:8083",
+    [string]$GatewayUrl = "http://localhost:8080",
     [string]$Username = "admin@crp.local",
     [string]$Password = "admin",
     [string]$ClientId = "crp-cli"
@@ -82,14 +81,16 @@ $correlationId = [guid]::NewGuid().ToString()
 
 Write-Host "Waiting for Keycloak, Inventory, Procurement..."
 Wait-Http "$KeycloakUrl/realms/crp/.well-known/openid-configuration" 240
-Wait-Http "$InventoryUrl/actuator/health" 240
-Wait-Http "$ProcurementUrl/actuator/health" 240
+Wait-Http "$GatewayUrl/actuator/health" 240
 
 $token = Get-AccessToken -BaseUrl $KeycloakUrl -User $Username -Pass $Password -Client $ClientId
 $headers = @{
     Authorization = "Bearer $token"
     "X-Correlation-Id" = $correlationId
 }
+
+$InventoryUrl = "$GatewayUrl/inventory"
+$ProcurementUrl = "$GatewayUrl/procurement"
 
 Write-Host "Create location..."
 $locCode = "MSK-" + (Get-Random -Minimum 1000 -Maximum 9999)

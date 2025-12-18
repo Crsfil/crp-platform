@@ -239,8 +239,6 @@ services:
     depends_on:
       - customer-postgres
       - keycloak
-    ports:
-      - "8085:8085"
 
   kyc-service:
     build:
@@ -254,8 +252,6 @@ services:
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://alloy:4318/v1/traces
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
       MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
-    ports:
-      - "8086:8086"
     depends_on:
       - keycloak
 
@@ -271,8 +267,6 @@ services:
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://alloy:4318/v1/traces
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
       MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
-    ports:
-      - "8087:8087"
     depends_on:
       - keycloak
 
@@ -288,8 +282,6 @@ services:
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://alloy:4318/v1/traces
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
       MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
-    ports:
-      - "8088:8088"
     depends_on:
       - keycloak
 
@@ -320,8 +312,6 @@ services:
       - underwriting-service
       - product-pricing-service
       - keycloak
-    ports:
-      - "8089:8089"
 
   agreement-service:
     build:
@@ -341,8 +331,6 @@ services:
     depends_on:
       - agreement-postgres
       - keycloak
-    ports:
-      - "8090:8090"
 
   billing-service:
     build:
@@ -372,8 +360,6 @@ services:
       - kafka3
       - redis
       - keycloak
-    ports:
-      - "8091:8091"
 
   payments-service:
     build:
@@ -389,8 +375,6 @@ services:
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://alloy:4318/v1/traces
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
       MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
-    ports:
-      - "8092:8092"
     depends_on:
       - kafka1
       - kafka2
@@ -418,8 +402,6 @@ services:
     depends_on:
       - schedule-postgres
       - keycloak
-    ports:
-      - "8093:8093"
 
   edocs-service:
     build:
@@ -432,8 +414,6 @@ services:
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://alloy:4318/v1/traces
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
       MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
-    ports:
-      - "8094:8094"
     depends_on:
       - keycloak
 
@@ -451,8 +431,6 @@ services:
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://alloy:4318/v1/traces
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
       MANAGEMENT_TRACING_PROPAGATION_TYPE: w3c,b3
-    ports:
-      - "8095:8095"
     depends_on:
       - keycloak
 
@@ -549,8 +527,6 @@ services:
       - kafka3
       - redis
       - keycloak
-    ports:
-      - "8096:8096"
 
   # auth-service removed (deprecated; use Keycloak)
   # --- Legacy block (disabled) ---
@@ -590,6 +566,8 @@ services:
       REDIS_PORT: 6379
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
+      CRP_TRUSTED_CLIENTS: reports-service,procurement-s2s
+      INVENTORY_LOCATION_ABAC_ENABLED: "true"
       INVENTORY_DOCS_STORAGE_TYPE: s3
       INVENTORY_S3_ENDPOINT: http://minio:9000
       INVENTORY_S3_REGION: us-east-1
@@ -609,8 +587,6 @@ services:
       - minio
       - minio-init
       - keycloak
-    ports:
-      - "8082:8082"
 
   procurement-service:
     build:
@@ -626,6 +602,11 @@ services:
       REDIS_PORT: 6379
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/crp
+      CRP_TRUSTED_CLIENTS: reports-service,procurement-s2s
+      INVENTORY_BASE_URL: http://inventory-service:8082
+      OIDC_ISSUER: http://keycloak:8080/realms/crp
+      S2S_CLIENT_ID: procurement-s2s
+      S2S_CLIENT_SECRET: procurement-s2s-secret
       PROCUREMENT_ATTACHMENTS_STORAGE_TYPE: s3
       PROCUREMENT_S3_ENDPOINT: http://minio:9000
       PROCUREMENT_S3_REGION: us-east-1
@@ -645,8 +626,6 @@ services:
       - minio
       - minio-init
       - keycloak
-    ports:
-      - "8083:8083"
 
   reports-service:
     build:
@@ -687,8 +666,6 @@ services:
       - kafka1
       - kafka2
       - kafka3
-    ports:
-      - "8084:8084"
 
 volumes:
   # auth_pgdata volume removed

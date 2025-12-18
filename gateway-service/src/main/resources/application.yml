@@ -10,6 +10,97 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:${SECURITY_JWT_ISSUER:http://keycloak:8080/realms/crp}}
+  cloud:
+    gateway:
+      routes:
+        - id: inventory
+          uri: ${INVENTORY_BASE_URL:http://inventory-service:8082}
+          predicates:
+            - Path=/inventory/**
+          filters:
+            - StripPrefix=1
+        - id: procurement
+          uri: ${PROCUREMENT_BASE_URL:http://procurement-service:8083}
+          predicates:
+            - Path=/procurement/**
+          filters:
+            - StripPrefix=1
+        - id: reports
+          uri: ${REPORTS_BASE_URL:http://reports-service:8084}
+          predicates:
+            - Path=/reports/**,/report-jobs/**,/report-templates/**
+        - id: customer
+          uri: ${CUSTOMER_BASE_URL:http://customer-service:8085}
+          predicates:
+            - Path=/customer/**
+          filters:
+            - StripPrefix=1
+        - id: kyc
+          uri: ${KYC_BASE_URL:http://kyc-service:8086}
+          predicates:
+            - Path=/kyc/**
+          filters:
+            - StripPrefix=1
+        - id: underwriting
+          uri: ${UNDERWRITING_BASE_URL:http://underwriting-service:8087}
+          predicates:
+            - Path=/underwriting/**
+          filters:
+            - StripPrefix=1
+        - id: pricing
+          uri: ${PRICING_BASE_URL:http://product-pricing-service:8088}
+          predicates:
+            - Path=/pricing/**
+          filters:
+            - StripPrefix=1
+        - id: application
+          uri: ${APPLICATION_BASE_URL:http://application-service:8089}
+          predicates:
+            - Path=/application/**
+          filters:
+            - StripPrefix=1
+        - id: agreement
+          uri: ${AGREEMENT_BASE_URL:http://agreement-service:8090}
+          predicates:
+            - Path=/agreement/**
+          filters:
+            - StripPrefix=1
+        - id: billing
+          uri: ${BILLING_BASE_URL:http://billing-service:8091}
+          predicates:
+            - Path=/billing/**
+          filters:
+            - StripPrefix=1
+        - id: payments
+          uri: ${PAYMENTS_BASE_URL:http://payments-service:8092}
+          predicates:
+            - Path=/payments/**
+          filters:
+            - StripPrefix=1
+        - id: schedule
+          uri: ${SCHEDULE_BASE_URL:http://schedule-service:8093}
+          predicates:
+            - Path=/schedule/**
+          filters:
+            - StripPrefix=1
+        - id: edocs
+          uri: ${EDOCS_BASE_URL:http://edocs-service:8094}
+          predicates:
+            - Path=/edocs/**
+          filters:
+            - StripPrefix=1
+        - id: bpm
+          uri: ${BPM_BASE_URL:http://bpm-service:8095}
+          predicates:
+            - Path=/bpm/**
+          filters:
+            - StripPrefix=1
+        - id: accounting
+          uri: ${ACCOUNTING_BASE_URL:http://accounting-service:8096}
+          predicates:
+            - Path=/accounting/**
+          filters:
+            - StripPrefix=1
   data:
     redis:
       host: ${REDIS_HOST:redis}

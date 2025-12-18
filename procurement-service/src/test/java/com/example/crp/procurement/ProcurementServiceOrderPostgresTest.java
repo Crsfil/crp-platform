@@ -26,7 +26,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(properties = {
         "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration,com.example.crp.security.JwtAudienceAutoConfiguration",
         "spring.task.scheduling.enabled=false",
-        "spring.main.allow-bean-definition-overriding=true"
+        "spring.main.allow-bean-definition-overriding=true",
+        "procurement.security.abac.enabled=false"
 })
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Testcontainers
@@ -67,8 +68,8 @@ class ProcurementServiceOrderPostgresTest {
         order.setPlannedCost(new BigDecimal("1000.00"));
         order.setCurrency("RUB");
 
-        ProcurementServiceOrder created = service.create(order);
-        service.complete(created.getId(), new BigDecimal("950.00"), OffsetDateTime.now(), null, "tester");
+        ProcurementServiceOrder created = service.create(order, null);
+        service.complete(created.getId(), new BigDecimal("950.00"), OffsetDateTime.now(), null, "tester", null);
 
         var events = outboxEventRepository.findTop50ByStatusOrderByCreatedAtAsc("PENDING");
         assertThat(events.stream().anyMatch(e -> "procurement.service_completed".equals(e.getTopic()))).isTrue();

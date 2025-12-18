@@ -37,7 +37,7 @@ public class ServiceOrdersController {
             rfq.setLocationId(req.locationId());
             rfq.setTitle(req.title());
             rfq.setCreatedBy(auth == null ? null : auth.getName());
-            var saved = serviceOrderService.createRfq(rfq, req.supplierIds());
+            var saved = serviceOrderService.createRfq(rfq, req.supplierIds(), auth);
             return ResponseEntity.status(201).body(toRfqDto(saved, serviceOrderService.listOffers(saved.getId())));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", ex.getMessage()));
@@ -46,8 +46,8 @@ public class ServiceOrdersController {
 
     @GetMapping("/rfq")
     @PreAuthorize("hasAuthority('PROCUREMENT_READ') or hasRole('ADMIN') or @trustedClientAuthorizer.isTrusted(authentication)")
-    public List<ProcurementDtos.RfqDto> listRfq() {
-        return serviceOrderService.listRfq().stream()
+    public List<ProcurementDtos.RfqDto> listRfq(org.springframework.security.core.Authentication auth) {
+        return serviceOrderService.listRfq(auth).stream()
                 .map(r -> toRfqDto(r, serviceOrderService.listOffers(r.getId())))
                 .toList();
     }
@@ -81,7 +81,7 @@ public class ServiceOrdersController {
             if (!mfaPolicy.isSatisfied(auth)) {
                 return ResponseEntity.status(403).body(java.util.Map.of("error", "mfa_required"));
             }
-            var saved = serviceOrderService.award(id, req.supplierId(), req.reason());
+            var saved = serviceOrderService.award(id, req.supplierId(), req.reason(), auth);
             return ResponseEntity.ok(toRfqDto(saved, serviceOrderService.listOffers(id)));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", ex.getMessage()));
@@ -108,7 +108,7 @@ public class ServiceOrdersController {
             order.setCurrency(req.currency());
             order.setNote(req.note());
             order.setCreatedBy(auth == null ? null : auth.getName());
-            var saved = serviceOrderService.create(order);
+            var saved = serviceOrderService.create(order, auth);
             return ResponseEntity.status(201).body(toServiceOrderDto(saved));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", ex.getMessage()));
@@ -119,8 +119,9 @@ public class ServiceOrdersController {
 
     @GetMapping("/orders")
     @PreAuthorize("hasAuthority('PROCUREMENT_READ') or hasRole('ADMIN') or @trustedClientAuthorizer.isTrusted(authentication)")
-    public List<ProcurementDtos.ServiceOrderDto> listServiceOrders(@RequestParam(value = "equipmentId", required = false) Long equipmentId) {
-        return serviceOrderService.listServiceOrders(equipmentId).stream().map(this::toServiceOrderDto).toList();
+    public List<ProcurementDtos.ServiceOrderDto> listServiceOrders(@RequestParam(value = "equipmentId", required = false) Long equipmentId,
+                                                                   org.springframework.security.core.Authentication auth) {
+        return serviceOrderService.listServiceOrders(equipmentId, auth).stream().map(this::toServiceOrderDto).toList();
     }
 
     @PostMapping("/orders/{id}/complete")
@@ -132,7 +133,7 @@ public class ServiceOrdersController {
             if (!mfaPolicy.isSatisfied(auth)) {
                 return ResponseEntity.status(403).body(java.util.Map.of("error", "mfa_required"));
             }
-            var saved = serviceOrderService.complete(id, req.actualCost(), req.completedAt(), req.actDocumentId(), auth == null ? null : auth.getName());
+            var saved = serviceOrderService.complete(id, req.actualCost(), req.completedAt(), req.actDocumentId(), auth == null ? null : auth.getName(), auth);
             return ResponseEntity.ok(toServiceOrderDto(saved));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", ex.getMessage()));

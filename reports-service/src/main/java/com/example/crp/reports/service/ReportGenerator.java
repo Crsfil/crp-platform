@@ -3,7 +3,11 @@ package com.example.crp.reports.service;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -16,29 +20,48 @@ import java.util.Map;
 
 @Service
 public class ReportGenerator {
-    private final WebClient inventoryClient;
-    private final WebClient procurementClient;
-    private final WebClient agreementClient;
-    private final WebClient billingClient;
-    private final WebClient customerClient;
-    private final WebClient applicationClient;
+    private final WebClient inventoryS2SClient;
+    private final WebClient inventoryUserClient;
+    private final WebClient procurementS2SClient;
+    private final WebClient procurementUserClient;
+    private final WebClient agreementS2SClient;
+    private final WebClient agreementUserClient;
+    private final WebClient billingS2SClient;
+    private final WebClient billingUserClient;
+    private final WebClient customerS2SClient;
+    private final WebClient customerUserClient;
+    private final WebClient applicationS2SClient;
+    private final WebClient applicationUserClient;
 
-    public ReportGenerator(WebClient inventoryClient,
-                           WebClient procurementClient,
-                           WebClient agreementClient,
-                           WebClient billingClient,
-                           WebClient customerClient,
-                           WebClient applicationClient) {
-        this.inventoryClient = inventoryClient;
-        this.procurementClient = procurementClient;
-        this.agreementClient = agreementClient;
-        this.billingClient = billingClient;
-        this.customerClient = customerClient;
-        this.applicationClient = applicationClient;
+    public ReportGenerator(@Qualifier("inventoryClient") WebClient inventoryS2SClient,
+                           @Qualifier("inventoryUserClient") WebClient inventoryUserClient,
+                           @Qualifier("procurementClient") WebClient procurementS2SClient,
+                           @Qualifier("procurementUserClient") WebClient procurementUserClient,
+                           @Qualifier("agreementClient") WebClient agreementS2SClient,
+                           @Qualifier("agreementUserClient") WebClient agreementUserClient,
+                           @Qualifier("billingClient") WebClient billingS2SClient,
+                           @Qualifier("billingUserClient") WebClient billingUserClient,
+                           @Qualifier("customerClient") WebClient customerS2SClient,
+                           @Qualifier("customerUserClient") WebClient customerUserClient,
+                           @Qualifier("applicationClient") WebClient applicationS2SClient,
+                           @Qualifier("applicationUserClient") WebClient applicationUserClient) {
+        this.inventoryS2SClient = inventoryS2SClient;
+        this.inventoryUserClient = inventoryUserClient;
+        this.procurementS2SClient = procurementS2SClient;
+        this.procurementUserClient = procurementUserClient;
+        this.agreementS2SClient = agreementS2SClient;
+        this.agreementUserClient = agreementUserClient;
+        this.billingS2SClient = billingS2SClient;
+        this.billingUserClient = billingUserClient;
+        this.customerS2SClient = customerS2SClient;
+        this.customerUserClient = customerUserClient;
+        this.applicationS2SClient = applicationS2SClient;
+        this.applicationUserClient = applicationUserClient;
     }
 
     public byte[] equipmentByStatusXlsx() {
-        List<Map<String, Object>> equipment = inventoryClient.get().uri("/equipment")
+        ClientCtx inv = inventory();
+        List<Map<String, Object>> equipment = withBearer(inv.client.get().uri("/equipment"), inv.bearer)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(List.class)
@@ -69,7 +92,8 @@ public class ReportGenerator {
     }
 
     public byte[] requestsByStatusXlsx() {
-        List<Map<String, Object>> reqs = procurementClient.get().uri("/requests")
+        ClientCtx pr = procurement();
+        List<Map<String, Object>> reqs = withBearer(pr.client.get().uri("/requests"), pr.bearer)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(List.class)
@@ -96,12 +120,14 @@ public class ReportGenerator {
     }
 
     public byte[] agreementsPortfolioXlsx() {
-        List<Map<String, Object>> agreements = agreementClient.get().uri("/agreements")
+        ClientCtx ag = agreement();
+        List<Map<String, Object>> agreements = withBearer(ag.client.get().uri("/agreements"), ag.bearer)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(List.class)
                 .block();
-        List<Map<String, Object>> customers = customerClient.get().uri("/customers")
+        ClientCtx cu = customer();
+        List<Map<String, Object>> customers = withBearer(cu.client.get().uri("/customers"), cu.bearer)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(List.class)
@@ -144,7 +170,8 @@ public class ReportGenerator {
     }
 
     public byte[] invoicesAgingXlsx() {
-        List<Map<String, Object>> invoices = billingClient.get().uri("/invoices")
+        ClientCtx bi = billing();
+        List<Map<String, Object>> invoices = withBearer(bi.client.get().uri("/invoices"), bi.bearer)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(List.class)
@@ -200,7 +227,8 @@ public class ReportGenerator {
     }
 
     public byte[] invoicesCashflowXlsx() {
-        List<Map<String, Object>> invoices = billingClient.get().uri("/invoices")
+        ClientCtx bi = billing();
+        List<Map<String, Object>> invoices = withBearer(bi.client.get().uri("/invoices"), bi.bearer)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(List.class)
@@ -239,7 +267,8 @@ public class ReportGenerator {
     }
 
     public byte[] applicationsKpiXlsx() {
-        List<Map<String, Object>> apps = applicationClient.get().uri("/applications")
+        ClientCtx ap = application();
+        List<Map<String, Object>> apps = withBearer(ap.client.get().uri("/applications"), ap.bearer)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(List.class)
@@ -273,22 +302,23 @@ public class ReportGenerator {
     }
 
     public byte[] procurementPipelineXlsx() {
-        List<Map<String, Object>> requests = procurementClient.get().uri("/requests")
+        ClientCtx pr = procurement();
+        List<Map<String, Object>> requests = withBearer(pr.client.get().uri("/requests"), pr.bearer)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(List.class)
                 .block();
-        List<Map<String, Object>> purchaseOrders = procurementClient.get().uri("/purchase-orders")
+        List<Map<String, Object>> purchaseOrders = withBearer(pr.client.get().uri("/purchase-orders"), pr.bearer)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(List.class)
                 .block();
-        List<Map<String, Object>> receipts = procurementClient.get().uri("/receipts")
+        List<Map<String, Object>> receipts = withBearer(pr.client.get().uri("/receipts"), pr.bearer)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(List.class)
                 .block();
-        List<Map<String, Object>> suppliers = procurementClient.get().uri("/suppliers")
+        List<Map<String, Object>> suppliers = withBearer(pr.client.get().uri("/suppliers"), pr.bearer)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(List.class)
@@ -404,12 +434,13 @@ public class ReportGenerator {
     }
 
     public byte[] supplierSpendXlsx() {
-        List<Map<String, Object>> purchaseOrders = procurementClient.get().uri("/purchase-orders")
+        ClientCtx pr = procurement();
+        List<Map<String, Object>> purchaseOrders = withBearer(pr.client.get().uri("/purchase-orders"), pr.bearer)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(List.class)
                 .block();
-        List<Map<String, Object>> suppliers = procurementClient.get().uri("/suppliers")
+        List<Map<String, Object>> suppliers = withBearer(pr.client.get().uri("/suppliers"), pr.bearer)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(List.class)
@@ -462,7 +493,8 @@ public class ReportGenerator {
     }
 
     public byte[] repossessedPortfolioXlsx() {
-        List<Map<String, Object>> equipment = inventoryClient.get().uri("/equipment")
+        ClientCtx inv = inventory();
+        List<Map<String, Object>> equipment = withBearer(inv.client.get().uri("/equipment"), inv.bearer)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(List.class)
@@ -504,7 +536,8 @@ public class ReportGenerator {
     }
 
     public byte[] storageCostsXlsx() {
-        List<Map<String, Object>> orders = procurementClient.get().uri("/service/orders")
+        ClientCtx pr = procurement();
+        List<Map<String, Object>> orders = withBearer(pr.client.get().uri("/service/orders"), pr.bearer)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(List.class)
@@ -545,7 +578,8 @@ public class ReportGenerator {
     }
 
     public byte[] dispositionResultsXlsx() {
-        List<Map<String, Object>> equipment = inventoryClient.get().uri("/equipment")
+        ClientCtx inv = inventory();
+        List<Map<String, Object>> equipment = withBearer(inv.client.get().uri("/equipment"), inv.bearer)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(List.class)
@@ -578,8 +612,8 @@ public class ReportGenerator {
                     }
                     List<Map<String, Object>> dispositions;
                     try {
-                        dispositions = inventoryClient.get()
-                                .uri("/equipment/{id}/dispositions", equipmentId)
+                        dispositions = withBearer(inv.client.get()
+                                .uri("/equipment/{id}/dispositions", equipmentId), inv.bearer)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .retrieve()
                                 .bodyToMono(List.class)
@@ -636,6 +670,56 @@ public class ReportGenerator {
         } catch (Exception ignored) {
             return java.math.BigDecimal.ZERO;
         }
+    }
+
+    private record ClientCtx(WebClient client, String bearer) {}
+
+    private ClientCtx inventory() {
+        String bearer = currentBearerOrNull();
+        return bearer == null ? new ClientCtx(inventoryS2SClient, null) : new ClientCtx(inventoryUserClient, bearer);
+    }
+
+    private ClientCtx procurement() {
+        String bearer = currentBearerOrNull();
+        return bearer == null ? new ClientCtx(procurementS2SClient, null) : new ClientCtx(procurementUserClient, bearer);
+    }
+
+    private ClientCtx agreement() {
+        String bearer = currentBearerOrNull();
+        return bearer == null ? new ClientCtx(agreementS2SClient, null) : new ClientCtx(agreementUserClient, bearer);
+    }
+
+    private ClientCtx billing() {
+        String bearer = currentBearerOrNull();
+        return bearer == null ? new ClientCtx(billingS2SClient, null) : new ClientCtx(billingUserClient, bearer);
+    }
+
+    private ClientCtx customer() {
+        String bearer = currentBearerOrNull();
+        return bearer == null ? new ClientCtx(customerS2SClient, null) : new ClientCtx(customerUserClient, bearer);
+    }
+
+    private ClientCtx application() {
+        String bearer = currentBearerOrNull();
+        return bearer == null ? new ClientCtx(applicationS2SClient, null) : new ClientCtx(applicationUserClient, bearer);
+    }
+
+    private static WebClient.RequestHeadersSpec<?> withBearer(WebClient.RequestHeadersSpec<?> spec, String bearer) {
+        if (bearer != null && !bearer.isBlank()) {
+            spec.headers(h -> h.setBearerAuth(bearer));
+        }
+        return spec;
+    }
+
+    private static String currentBearerOrNull() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (!(auth instanceof JwtAuthenticationToken jwtAuth)) {
+            return null;
+        }
+        if (jwtAuth.getToken() == null) {
+            return null;
+        }
+        return jwtAuth.getToken().getTokenValue();
     }
 
     private String s(Object o) { return o == null ? "" : o.toString(); }

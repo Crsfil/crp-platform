@@ -95,3 +95,6 @@ procurement:
         secret-key: ${PROCUREMENT_S3_SECRET_KEY:}
         path-style-access: ${PROCUREMENT_S3_PATH_STYLE_ACCESS:true}
         presign-ttl: ${PROCUREMENT_S3_PRESIGN_TTL:PT15M}
+
+inventory:
+  base-url: ${INVENTORY_BASE_URL:http://inventory-service:8082}
