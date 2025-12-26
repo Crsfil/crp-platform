@@ -1,0 +1,15 @@
+image: alpine:3.19
+
+pipelines:
+  branches:
+    main:
+      - step:
+          name: Deploy Camunda process models
+          condition:
+            changesets:
+              includePaths:
+                - "process-models/**"
+                - "scripts/deploy-camunda-models.sh"
+          script:
+            - apk add --no-cache bash curl
+            - bash scripts/deploy-camunda-models.sh

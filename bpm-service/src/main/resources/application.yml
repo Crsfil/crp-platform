@@ -23,6 +23,12 @@ security:
   # security.internal-api-key: changeme
 
 crp:
+  camunda:
+    base-url: ${CAMUNDA_BASE_URL:http://camunda-platform:8080/engine-rest}
+    worker:
+      max-tasks: ${CAMUNDA_WORKER_MAX_TASKS:5}
+      lock-duration-ms: ${CAMUNDA_WORKER_LOCK_MS:10000}
+      async-response-timeout-ms: ${CAMUNDA_WORKER_ASYNC_MS:20000}
   security:
     jwt:
       enforce-audience: true

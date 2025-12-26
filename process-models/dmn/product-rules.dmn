@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:camunda="http://camunda.org/schema/1.0/dmn"
+             id="definitions_product_rules"
+             name="Product Rules"
+             namespace="http://example.com/crp/dmn">
+  <decision id="productRules" name="Product Rules">
+    <decisionTable id="DecisionTable_product_rules" hitPolicy="FIRST">
+      <input id="input_region" label="Region">
+        <inputExpression id="inputExpression_region" typeRef="string">
+          <text>region</text>
+        </inputExpression>
+      </input>
+      <input id="input_brand" label="Brand">
+        <inputExpression id="inputExpression_brand" typeRef="string">
+          <text>brand</text>
+        </inputExpression>
+      </input>
+      <input id="input_usage" label="Usage">
+        <inputExpression id="inputExpression_usage" typeRef="string">
+          <text>usage</text>
+        </inputExpression>
+      </input>
+
+      <output id="output_approved" name="approved" typeRef="boolean" />
+      <output id="output_rate" name="rateAnnualPct" typeRef="double" />
+      <output id="output_down" name="downPaymentPct" typeRef="double" />
+      <output id="output_code" name="productCode" typeRef="string" />
+
+      <rule id="rule_moscow_haval">
+        <inputEntry id="inputEntry_mh_region"><text>"Moscow"</text></inputEntry>
+        <inputEntry id="inputEntry_mh_brand"><text>"Haval"</text></inputEntry>
+        <inputEntry id="inputEntry_mh_usage"><text>-</text></inputEntry>
+        <outputEntry id="outputEntry_mh_approved"><text>true</text></outputEntry>
+        <outputEntry id="outputEntry_mh_rate"><text>15</text></outputEntry>
+        <outputEntry id="outputEntry_mh_down"><text>0.1</text></outputEntry>
+        <outputEntry id="outputEntry_mh_code"><text>"HV-MSK"</text></outputEntry>
+      </rule>
+
+      <rule id="rule_kia_zero_down">
+        <inputEntry id="inputEntry_kia_region"><text>-</text></inputEntry>
+        <inputEntry id="inputEntry_kia_brand"><text>"Kia"</text></inputEntry>
+        <inputEntry id="inputEntry_kia_usage"><text>-</text></inputEntry>
+        <outputEntry id="outputEntry_kia_approved"><text>true</text></outputEntry>
+        <outputEntry id="outputEntry_kia_rate"><text>17</text></outputEntry>
+        <outputEntry id="outputEntry_kia_down"><text>0.0</text></outputEntry>
+        <outputEntry id="outputEntry_kia_code"><text>"KIA-ZD"</text></outputEntry>
+      </rule>
+
+      <rule id="rule_taxi">
+        <inputEntry id="inputEntry_taxi_region"><text>-</text></inputEntry>
+        <inputEntry id="inputEntry_taxi_brand"><text>-</text></inputEntry>
+        <inputEntry id="inputEntry_taxi_usage"><text>"taxi"</text></inputEntry>
+        <outputEntry id="outputEntry_taxi_approved"><text>true</text></outputEntry>
+        <outputEntry id="outputEntry_taxi_rate"><text>19</text></outputEntry>
+        <outputEntry id="outputEntry_taxi_down"><text>0.2</text></outputEntry>
+        <outputEntry id="outputEntry_taxi_code"><text>"TAXI"</text></outputEntry>
+      </rule>
+
+      <rule id="rule_default">
+        <inputEntry id="inputEntry_def_region"><text>-</text></inputEntry>
+        <inputEntry id="inputEntry_def_brand"><text>-</text></inputEntry>
+        <inputEntry id="inputEntry_def_usage"><text>-</text></inputEntry>
+        <outputEntry id="outputEntry_def_approved"><text>true</text></outputEntry>
+        <outputEntry id="outputEntry_def_rate"><text>18</text></outputEntry>
+        <outputEntry id="outputEntry_def_down"><text>0.15</text></outputEntry>
+        <outputEntry id="outputEntry_def_code"><text>"STD"</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+</definitions>

@@ -423,6 +423,7 @@ services:
       dockerfile: bpm-service/Dockerfile
     environment:
       SERVER_PORT: 8095
+      CAMUNDA_BASE_URL: http://camunda-platform:8080/engine-rest
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-2q8pKX2a7o1X6jO0Vqkq0+U2YQj9tS8R4qv8x9w1e+M=}
       OIDC_ISSUER: http://keycloak:8080/realms/crp
       S2S_CLIENT_ID: bpm-service-caller

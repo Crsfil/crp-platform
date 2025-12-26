@@ -39,10 +39,11 @@ kubectl apply -f infrastructure/k8s/namespace.yaml | Out-Null
 kubectl apply -f infrastructure/k8s/shared-secret.yaml | Out-Null
 kubectl apply -f infrastructure/k8s/secrets | Out-Null
 
-Write-Host "[CRP] Applying infra (ZK/Kafka/Redis)..."
+Write-Host "[CRP] Applying infra (ZK/Kafka/Redis/Camunda)..."
 kubectl apply -f infrastructure/k8s/infra/zookeeper.yaml | Out-Null
 kubectl apply -f infrastructure/k8s/infra/kafka.yaml | Out-Null
 kubectl apply -f infrastructure/k8s/infra/redis.yaml | Out-Null
+kubectl apply -f infrastructure/k8s/infra/camunda-platform.yaml | Out-Null
 
 Write-Host "[CRP] Applying observability (Prometheus/Grafana/Loki/Tempo/Alloy)..."
 kubectl apply -f infrastructure/k8s/observability | Out-Null
@@ -52,6 +53,7 @@ kubectl apply -f infrastructure/k8s/postgres | Out-Null
 $dbSets = @(
   'auth-postgres','inventory-postgres','procurement-postgres','reports-postgres',
   'customer-postgres','application-postgres','agreement-postgres','billing-postgres','schedule-postgres','accounting-postgres'
+  ,'camunda-postgres'
 )
 foreach ($s in $dbSets) {
   Write-Host "[CRP] Waiting for $s..."

@@ -1,20 +1,21 @@
 package com.example.crp.bpm.web;
 
-import org.flowable.engine.RuntimeService;
-import org.flowable.engine.runtime.ProcessInstance;
 import org.springframework.web.bind.annotation.*;
+import com.example.crp.bpm.camunda.CamundaRestClient;
 
 import java.util.Map;
 
 @RestController
 @RequestMapping("/bpm")
 public class BpmController {
-    private final RuntimeService runtimeService;
-    public BpmController(RuntimeService runtimeService) { this.runtimeService = runtimeService; }
+    private final CamundaRestClient camundaRestClient;
+
+    public BpmController(CamundaRestClient camundaRestClient) {
+        this.camundaRestClient = camundaRestClient;
+    }
 
     @PostMapping("/process/start")
     public Map<String,Object> start(@RequestBody Map<String,Object> vars){
-        ProcessInstance pi = runtimeService.startProcessInstanceByKey("applicationProcess", vars);
-        return Map.of("id", pi.getId(), "definitionId", pi.getProcessDefinitionId(), "businessKey", pi.getBusinessKey());
+        return camundaRestClient.startProcess("applicationProcess", vars);
     }
 }

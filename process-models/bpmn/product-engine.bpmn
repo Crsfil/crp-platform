@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+             targetNamespace="Examples">
+  <process id="productEngine" name="Dynamic Product Engine" isExecutable="true" camunda:historyTimeToLive="180">
+    <startEvent id="start" />
+    <sequenceFlow id="p1" sourceRef="start" targetRef="dmnRules" />
+
+    <businessRuleTask id="dmnRules" name="Evaluate Product Rules" camunda:decisionRef="productRules"
+                      camunda:resultVariable="productRule" camunda:mapDecisionResult="singleResult" />
+    <sequenceFlow id="p2" sourceRef="dmnRules" targetRef="gwApproved" />
+
+    <exclusiveGateway id="gwApproved" name="Approved?" />
+    <sequenceFlow id="p3" sourceRef="gwApproved" targetRef="svcPricing">
+      <conditionExpression xsi:type="tFormalExpression">${productRule.approved == true}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="p4" sourceRef="gwApproved" targetRef="endRejected">
+      <conditionExpression xsi:type="tFormalExpression">${productRule.approved == false}</conditionExpression>
+    </sequenceFlow>
+
+    <serviceTask id="svcPricing" name="Calculate Pricing" camunda:type="external" camunda:topic="pricing" />
+    <sequenceFlow id="p5" sourceRef="svcPricing" targetRef="endApproved" />
+
+    <endEvent id="endApproved" name="Approved" />
+    <endEvent id="endRejected" name="Rejected" />
+  </process>
+</definitions>

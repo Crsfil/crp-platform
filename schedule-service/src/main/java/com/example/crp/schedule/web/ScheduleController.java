@@ -26,6 +26,46 @@ public class ScheduleController {
                                        @RequestParam double amount,
                                        @RequestParam int termMonths,
                                        @RequestParam double rateAnnualPct) {
+        return generateSchedule(agreementId, amount, termMonths, rateAnnualPct);
+    }
+
+    @PostMapping("/restructure")
+    public Map<String, Object> restructure(@RequestParam Long agreementId,
+                                           @RequestParam double amount,
+                                           @RequestParam int termMonths,
+                                           @RequestParam double rateAnnualPct) {
+        List<ScheduleItem> existing = repo.findByAgreementIdOrderByDueDate(agreementId);
+        for (ScheduleItem item : existing) {
+            if ("PLANNED".equals(item.getStatus())) {
+                item.setStatus("REPLACED");
+            }
+        }
+        repo.saveAll(existing);
+        List<ScheduleItem> recalculated = generateSchedule(agreementId, amount, termMonths, rateAnnualPct);
+        return Map.of(
+                "status", "RESTRUCTURED",
+                "agreementId", agreementId,
+                "items", recalculated.size()
+        );
+    }
+
+    @GetMapping("/due")
+    public List<ScheduleItem> due(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return repo.findByDueDateAndStatus(date, "PLANNED");
+    }
+
+    @PostMapping("/{id}/markInvoiced")
+    public Map<String,Object> markInvoiced(@PathVariable Long id) {
+        ScheduleItem si = repo.findById(id).orElseThrow();
+        si.setStatus("INVOICED");
+        repo.save(si);
+        return Map.of("status","INVOICED");
+    }
+
+    private List<ScheduleItem> generateSchedule(Long agreementId,
+                                                 double amount,
+                                                 int termMonths,
+                                                 double rateAnnualPct) {
         Map res = pricingClient.post().uri(uriBuilder -> uriBuilder
                         .path("/pricing/calc")
                         .queryParam("amount", amount)
@@ -47,18 +87,5 @@ public class ScheduleController {
             out.add(repo.save(si));
         }
         return out;
-    }
-
-    @GetMapping("/due")
-    public List<ScheduleItem> due(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return repo.findByDueDateAndStatus(date, "PLANNED");
-    }
-
-    @PostMapping("/{id}/markInvoiced")
-    public Map<String,Object> markInvoiced(@PathVariable Long id) {
-        ScheduleItem si = repo.findById(id).orElseThrow();
-        si.setStatus("INVOICED");
-        repo.save(si);
-        return Map.of("status","INVOICED");
     }
 }

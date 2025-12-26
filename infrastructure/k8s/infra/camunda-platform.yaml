@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: camunda-platform
+  namespace: crp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: camunda-platform
+  template:
+    metadata:
+      labels:
+        app: camunda-platform
+    spec:
+      containers:
+        - name: camunda-platform
+          image: camunda/camunda-bpm-platform:7.21.0
+          env:
+            - { name: DB_DRIVER, value: org.postgresql.Driver }
+            - { name: DB_URL, value: jdbc:postgresql://camunda-postgres:5432/camunda }
+            - name: DB_USERNAME
+              valueFrom: { secretKeyRef: { name: camunda-db, key: username } }
+            - name: DB_PASSWORD
+              valueFrom: { secretKeyRef: { name: camunda-db, key: password } }
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: camunda-platform
+  namespace: crp
+spec:
+  selector:
+    app: camunda-platform
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080

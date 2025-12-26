@@ -17,16 +17,18 @@ CRP Platform
 - edocs-service — хранилище документов/вложений (S3/MinIO)
 - accounting-service — простая бухгалтерия (проводки по инвойсам/платежам)
 - gateway-service — API шлюз (единая точка входа, BFF)
-- bpm-service — BPMN процесс заявки (Flowable)
+- bpm-service — BPMN/DMN оркестрация (Camunda external tasks)
 
 Стек: Java 17, Spring Boot 3, Spring Security, JPA/Hibernate, Liquibase, PostgreSQL (на каждый сервис своя БД), Kafka, Redis, Actuator/Prometheus, OpenAPI.
 
-Локальная инфраструктура (docker-compose): Keycloak, Kafka/Zookeeper, Redis, Postgres для сервисов, MinIO (S3‑совместимое хранилище для отчётов/вложений), Prometheus/Grafana/Loki/Tempo/Alloy. Kubernetes-манифесты в каталоге `infrastructure/k8s/` (адаптируйте `image` и хосты под кластер).
+Локальная инфраструктура (docker-compose): Keycloak, Camunda Platform, Kafka/Zookeeper, Redis, Postgres для сервисов, MinIO (S3‑совместимое хранилище для отчётов/вложений), Prometheus/Grafana/Loki/Tempo/Alloy. Kubernetes-манифесты в каталоге `infrastructure/k8s/` (адаптируйте `image` и хосты под кластер).
 
 Быстрый старт (Docker, Keycloak + RS256):
-- Запуск: `docker compose up -d --build` (в каталоге проекта)
-- Поднимутся: Keycloak (порт 18080), Kafka+ZK, Redis, MinIO (9000/9001), Postgres и все сервисы.
+- Запуск (без Camunda): `docker compose up -d --build` (в каталоге проекта)
+- Запуск с Camunda: `docker compose -f docker-compose.yml -f infrastructure/camunda/docker-compose.camunda.yml up -d --build`
+- Поднимутся: Keycloak (порт 18080), Camunda Platform (18081, если включена, с отдельным Postgres), Kafka+ZK, Redis, MinIO (9000/9001), Postgres и все сервисы.
 - Keycloak автоматически импортирует realm `crp` (пользователь `admin@crp.local`/`admin`, роли `ADMIN/MANAGER/ANALYST/USER`, клиент `crp-cli`).
+- Процессы и DMN лежат в `process-models/`; деплой: `powershell -ExecutionPolicy Bypass -File scripts/deploy-camunda-models.ps1`.
 
 Контуры по умолчанию (основные):
 - gateway: http://localhost:8080
@@ -45,6 +47,7 @@ CRP Platform
 - edocs: http://localhost:8094
 - bpm: http://localhost:8095
 - accounting: http://localhost:8096
+- camunda: http://localhost:18081 (engine-rest)
 
 Конфигурация окружения (ключевое):
 - JWT ресурсы: `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI` указывает на Issuer Keycloak (`http://keycloak:8080/realms/crp`). Симметричный `SECURITY_JWT_SECRET` не используется ресурс‑сервисами.
@@ -135,7 +138,8 @@ BFF (реализовано):
 - `docker compose up -d --build` — собирает монорепозиторий и поднимает все сервисы и инфраструктуру.
 
 Один скрипт — Docker
-- `powershell -ExecutionPolicy Bypass -File scripts/up.ps1 -Rebuild` (или просто `scripts\up.ps1`)
+- `powershell -ExecutionPolicy Bypass -File scripts/up.ps1 -Rebuild` (без Camunda)
+- `powershell -ExecutionPolicy Bypass -File scripts/up.ps1 -Rebuild -WithCamunda`
 
 Один скрипт — Kubernetes (minikube)
 - Требуется: kubectl, minikube, docker, default StorageClass
@@ -144,8 +148,13 @@ BFF (реализовано):
   - По итогу: `kubectl get pods -n crp` и открывайте http://crp.local (пропишите hosts на IP minikube, если нужно) или `kubectl port-forward deploy/gateway-service -n crp 8080:8080`.
 
 Дополнительно (BPM + график + биллинг + платежи):
-- BPM (Flowable): старт процесса заявки
+- Перед запуском BPM‑сценариев убедитесь, что модели задеплоены в Camunda (`scripts/deploy-camunda-models.ps1`).
+- BPM (Camunda): старт процесса заявки
   - `curl -s http://localhost:8095/bpm/process/start -H "Authorization: Bearer $AT" -H "Content-Type: application/json" -d '{"customerId":1,"amount":1000000,"termMonths":36,"rateAnnualPct":12}'`
+- BPM (Camunda/DMN): оценка правил продукта
+  - `curl -s http://localhost:8095/bpm/product-engine/evaluate -H "Authorization: Bearer $AT" -H "Content-Type: application/json" -d '{"region":"Moscow","brand":"Haval","usage":"taxi"}'`
+- BPM (Camunda): реструктуризация
+  - `curl -s http://localhost:8095/bpm/restructuring/start -H "Authorization: Bearer $AT" -H "Content-Type: application/json" -d '{"agreementId":1,"outstandingPrincipal":900000,"rateAnnualPct":12,"remainingTermMonths":24,"desiredPayment":30000,"graceMonths":1}'`
 - Сгенерировать график для договора:
   - `curl -s "http://localhost:8093/schedule/generate?agreementId=1&amount=1000000&termMonths=36&rateAnnualPct=12" -H "Authorization: Bearer $AT"`
 - Авто-начисление инвойсов:

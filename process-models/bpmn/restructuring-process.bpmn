@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+             targetNamespace="Examples">
+  <process id="restructuringProcess" name="Restructuring Process" isExecutable="true" camunda:historyTimeToLive="365">
+    <startEvent id="start" />
+    <sequenceFlow id="r1" sourceRef="start" targetRef="svcCalc" />
+
+    <serviceTask id="svcCalc" name="Calculate NPV" camunda:type="external" camunda:topic="restructure-calc" />
+    <sequenceFlow id="r2" sourceRef="svcCalc" targetRef="gwApproved" />
+
+    <exclusiveGateway id="gwApproved" name="Approved?" />
+    <sequenceFlow id="r3" sourceRef="gwApproved" targetRef="svcSchedule">
+      <conditionExpression xsi:type="tFormalExpression">${approved == true}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="r4" sourceRef="gwApproved" targetRef="svcManual">
+      <conditionExpression xsi:type="tFormalExpression">${approved == false}</conditionExpression>
+    </sequenceFlow>
+
+    <serviceTask id="svcSchedule" name="Recalculate Schedule" camunda:type="external" camunda:topic="schedule-recalc" />
+    <sequenceFlow id="r5" sourceRef="svcSchedule" targetRef="svcAgreement" />
+
+    <serviceTask id="svcAgreement" name="Update Agreement" camunda:type="external" camunda:topic="agreement-restructure" />
+    <sequenceFlow id="r6" sourceRef="svcAgreement" targetRef="svcNotify" />
+
+    <serviceTask id="svcNotify" name="Notify Parties" camunda:type="external" camunda:topic="restructure-notify" />
+    <sequenceFlow id="r7" sourceRef="svcNotify" targetRef="endApproved" />
+
+    <serviceTask id="svcManual" name="Manual Review" camunda:type="external" camunda:topic="restructure-review" />
+    <sequenceFlow id="r8" sourceRef="svcManual" targetRef="endRejected" />
+
+    <endEvent id="endApproved" name="Approved" />
+    <endEvent id="endRejected" name="Needs Review" />
+  </process>
+</definitions>

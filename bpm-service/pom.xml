@@ -11,9 +11,9 @@
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-oauth2-resource-server</artifactId></dependency>
     <dependency><groupId>com.example.crp</groupId><artifactId>common-security</artifactId></dependency>
     <dependency>
-      <groupId>org.flowable</groupId>
-      <artifactId>flowable-spring-boot-starter-process</artifactId>
-      <version>6.8.0</version>
+      <groupId>org.camunda.bpm</groupId>
+      <artifactId>camunda-external-task-client</artifactId>
+      <version>7.21.0</version>
     </dependency>
     <dependency>
       <groupId>com.example.crp</groupId>

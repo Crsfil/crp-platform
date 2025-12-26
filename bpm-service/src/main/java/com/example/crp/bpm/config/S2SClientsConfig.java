@@ -23,6 +23,10 @@ public class S2SClientsConfig {
     private String pricingBaseUrl;
     @Value("${application.base-url:http://application-service:8089}")
     private String applicationBaseUrl;
+    @Value("${schedule.base-url:http://schedule-service:8093}")
+    private String scheduleBaseUrl;
+    @Value("${agreement.base-url:http://agreement-service:8090}")
+    private String agreementBaseUrl;
 
     @Value("${OIDC_ISSUER:http://keycloak:8080/realms/crp}")
     private String issuer;
@@ -49,4 +53,6 @@ public class S2SClientsConfig {
     @Bean public WebClient underwritingClient(WebClient.Builder b){ return b.clone().baseUrl(uwBaseUrl).filter(bearer(b)).build(); }
     @Bean public WebClient pricingClient(WebClient.Builder b){ return b.clone().baseUrl(pricingBaseUrl).filter(bearer(b)).build(); }
     @Bean public WebClient applicationClient(WebClient.Builder b){ return b.clone().baseUrl(applicationBaseUrl).filter(bearer(b)).build(); }
+    @Bean public WebClient scheduleClient(WebClient.Builder b){ return b.clone().baseUrl(scheduleBaseUrl).filter(bearer(b)).build(); }
+    @Bean public WebClient agreementClient(WebClient.Builder b){ return b.clone().baseUrl(agreementBaseUrl).filter(bearer(b)).build(); }
 }

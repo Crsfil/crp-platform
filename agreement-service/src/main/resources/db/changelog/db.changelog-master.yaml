@@ -11,4 +11,14 @@ databaseChangeLog:
               - column: { name: number, type: VARCHAR(64) }
               - column: { name: status, type: VARCHAR(32) }
               - column: { name: signed_at, type: TIMESTAMP WITH TIME ZONE }
-
+  - changeSet:
+      id: 002-add-restructuring-fields
+      author: system
+      changes:
+        - addColumn:
+            tableName: agreement
+            columns:
+              - column: { name: term_months, type: INT }
+              - column: { name: rate_annual_pct, type: NUMERIC(8,3) }
+              - column: { name: restructure_version, type: INT, defaultValueNumeric: 0 }
+              - column: { name: restructured_at, type: TIMESTAMP WITH TIME ZONE }
